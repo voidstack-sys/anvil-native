@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Accordion, Dialog, Popover, Tabs, ToggleGroup } from 'anvil-native';
+import {
+  Accordion,
+  Dialog,
+  Menu,
+  Popover,
+  Tabs,
+  ToggleGroup,
+} from 'anvil-native';
 
 type Align = 'left' | 'center' | 'right';
 
@@ -202,6 +209,31 @@ export default function App() {
           </View>
         </Dialog.Content>
       </Dialog.Root>
+
+      <Text style={[styles.title, styles.sectionSpacing]}>
+        Anvil — demo de Menu
+      </Text>
+
+      <View style={styles.popoverRow}>
+        <Menu.Root>
+          <Menu.Trigger style={styles.popoverTrigger}>
+            <Text style={styles.popoverTriggerLabel}>⋮</Text>
+          </Menu.Trigger>
+          <Menu.Content align="start" style={styles.menuContent}>
+            <Menu.Label style={styles.menuLabel}>Acciones</Menu.Label>
+            <Menu.Item style={styles.menuItem}>
+              <Text style={styles.menuItemLabel}>Editar</Text>
+            </Menu.Item>
+            <Menu.Item style={styles.menuItem}>
+              <Text style={styles.menuItemLabel}>Duplicar</Text>
+            </Menu.Item>
+            <Menu.Separator style={styles.menuSeparator} />
+            <Menu.Item style={styles.menuItem}>
+              <Text style={styles.menuItemDanger}>Eliminar</Text>
+            </Menu.Item>
+          </Menu.Content>
+        </Menu.Root>
+      </View>
     </ScrollView>
   );
 }
@@ -395,5 +427,43 @@ const styles = StyleSheet.create({
   dialogConfirmLabel: {
     color: '#fff',
     fontWeight: '600',
+  },
+  menuContent: {
+    minWidth: 180,
+    borderRadius: 12,
+    paddingVertical: 8,
+    backgroundColor: '#fff',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#ccc',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
+  menuLabel: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#888',
+    textTransform: 'uppercase',
+  },
+  menuItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  menuItemLabel: {
+    color: '#111',
+    fontSize: 15,
+  },
+  menuItemDanger: {
+    color: '#b91c1c',
+    fontSize: 15,
+  },
+  menuSeparator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: '#ccc',
+    marginVertical: 4,
   },
 });

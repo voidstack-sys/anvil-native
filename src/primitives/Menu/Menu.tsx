@@ -13,9 +13,11 @@ import {
   Modal,
   Pressable,
   StyleSheet,
+  Text,
   View,
   useWindowDimensions,
   type PressableProps,
+  type TextProps,
   type ViewProps,
 } from 'react-native';
 import {
@@ -32,27 +34,26 @@ import {
 
 type ViewRef = React.ComponentRef<typeof View>;
 
-interface PopoverContextValue {
+interface MenuContextValue {
   open: boolean;
   disabled: boolean;
   triggerRef: React.RefObject<ViewRef | null>;
-  anchorRef: React.RefObject<ViewRef | null>;
-  openPopover: () => void;
-  closePopover: () => void;
-  togglePopover: () => void;
+  openMenu: () => void;
+  closeMenu: () => void;
+  toggleMenu: () => void;
 }
 
-const PopoverContext = createContext<PopoverContextValue | null>(null);
+const MenuContext = createContext<MenuContextValue | null>(null);
 
-function usePopoverContext(component: string): PopoverContextValue {
-  const context = useContext(PopoverContext);
+function useMenuContext(component: string): MenuContextValue {
+  const context = useContext(MenuContext);
   if (!context) {
-    throw new Error(`Popover.${component} must be used within a Popover.Root`);
+    throw new Error(`Menu.${component} must be used within a Menu.Root`);
   }
   return context;
 }
 
-export interface PopoverRootProps {
+export interface MenuRootProps {
   open?: boolean;
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -61,14 +62,14 @@ export interface PopoverRootProps {
   children: React.ReactNode;
 }
 
-export interface PopoverHandle {
+export interface MenuHandle {
   open: () => void;
   close: () => void;
   toggle: () => void;
   isOpen: () => boolean;
 }
 
-const Root = forwardRef<PopoverHandle, PopoverRootProps>(function PopoverRoot(
+const Root = forwardRef<MenuHandle, MenuRootProps>(function MenuRoot(
   { open, defaultOpen = false, onOpenChange, disabled = false, children },
   ref
 ) {
@@ -77,7 +78,7 @@ const Root = forwardRef<PopoverHandle, PopoverRootProps>(function PopoverRoot(
 
   useWarnOnceWhen(isControlled !== initialIsControlled, () =>
     controlledChangeMessage(
-      'Popover.Root',
+      'Menu.Root',
       initialIsControlled,
       isControlled,
       'open'
@@ -97,22 +98,21 @@ const Root = forwardRef<PopoverHandle, PopoverRootProps>(function PopoverRoot(
     [isControlled, onOpenChange]
   );
 
-  const openPopover = useCallback(() => setOpen(true), [setOpen]);
-  const closePopover = useCallback(() => setOpen(false), [setOpen]);
-  const togglePopover = useCallback(() => setOpen(!isOpen), [setOpen, isOpen]);
+  const openMenu = useCallback(() => setOpen(true), [setOpen]);
+  const closeMenu = useCallback(() => setOpen(false), [setOpen]);
+  const toggleMenu = useCallback(() => setOpen(!isOpen), [setOpen, isOpen]);
 
   const triggerRef = useRef<ViewRef>(null);
-  const anchorRef = useRef<ViewRef>(null);
 
   useImperativeHandle(
     ref,
     () => ({
-      open: openPopover,
-      close: closePopover,
-      toggle: togglePopover,
+      open: openMenu,
+      close: closeMenu,
+      toggle: toggleMenu,
       isOpen: () => isOpen,
     }),
-    [openPopover, closePopover, togglePopover, isOpen]
+    [openMenu, closeMenu, toggleMenu, isOpen]
   );
 
   const contextValue = useMemo(
@@ -120,70 +120,50 @@ const Root = forwardRef<PopoverHandle, PopoverRootProps>(function PopoverRoot(
       open: isOpen,
       disabled,
       triggerRef,
-      anchorRef,
-      openPopover,
-      closePopover,
-      togglePopover,
+      openMenu,
+      closeMenu,
+      toggleMenu,
     }),
-    [isOpen, disabled, openPopover, closePopover, togglePopover]
+    [isOpen, disabled, openMenu, closeMenu, toggleMenu]
   );
 
   return (
-    <PopoverContext.Provider value={contextValue}>
-      {children}
-    </PopoverContext.Provider>
+    <MenuContext.Provider value={contextValue}>{children}</MenuContext.Provider>
   );
 });
-Root.displayName = 'Popover.Root';
+Root.displayName = 'Menu.Root';
 
-/**
- * Optional: anchors the floating Content to a different element than
- * `Popover.Trigger` (which still handles opening/closing). Use one or the
- * other as the positioning reference, not both.
- */
-export type PopoverAnchorProps = ViewProps;
-
-function Anchor({ children, ...viewProps }: PopoverAnchorProps) {
-  const { anchorRef } = usePopoverContext('Anchor');
-  return (
-    <View ref={anchorRef} {...viewProps}>
-      {children}
-    </View>
-  );
-}
-Anchor.displayName = 'Popover.Anchor';
-
-export type PopoverTriggerRenderProps = {
+export type MenuTriggerRenderProps = {
   open: boolean;
   disabled: boolean;
 };
 
-export interface PopoverTriggerProps extends Omit<
+export interface MenuTriggerProps extends Omit<
   PressableProps,
   'children' | 'onPress' | 'disabled'
 > {
   disabled?: boolean;
   children:
-    React.ReactNode | ((state: PopoverTriggerRenderProps) => React.ReactNode);
+    React.ReactNode | ((state: MenuTriggerRenderProps) => React.ReactNode);
 }
 
 function Trigger({
   disabled: triggerDisabled = false,
   children,
   ...pressableProps
-}: PopoverTriggerProps) {
+}: MenuTriggerProps) {
   const {
     open,
     disabled: groupDisabled,
     triggerRef,
-    togglePopover,
-  } = usePopoverContext('Trigger');
+    toggleMenu,
+  } = useMenuContext('Trigger');
   const disabled = triggerDisabled || groupDisabled;
 
   const handlePress = useCallback(() => {
     if (disabled) return;
-    togglePopover();
-  }, [disabled, togglePopover]);
+    toggleMenu();
+  }, [disabled, toggleMenu]);
 
   return (
     <Pressable
@@ -198,32 +178,32 @@ function Trigger({
     </Pressable>
   );
 }
-Trigger.displayName = 'Popover.Trigger';
+Trigger.displayName = 'Menu.Trigger';
 
-export type PopoverContentRenderProps = {
+export type MenuContentRenderProps = {
   /** The side the content actually ended up on (may differ from the requested `side` if it got flipped). */
   side: FloatingSide;
 };
 
-export interface PopoverContentProps extends Omit<ViewProps, 'children'> {
+export interface MenuContentProps extends Omit<ViewProps, 'children'> {
   side?: FloatingSide;
   align?: FloatingAlign;
   sideOffset?: number;
   alignOffset?: number;
   /** Flip to the opposite side, and clamp cross-axis position, so content stays on-screen. Defaults to true. */
   avoidCollisions?: boolean;
-  /** Close when the backdrop (outside the content) is pressed. Defaults to true. */
+  /** Close when the backdrop (outside the menu) is pressed. Defaults to true. */
   closeOnOutsidePress?: boolean;
   /** Keep the content mounted (invisible) even when closed. Content won't reposition itself while closed. */
   forceMount?: boolean;
   children:
-    React.ReactNode | ((state: PopoverContentRenderProps) => React.ReactNode);
+    React.ReactNode | ((state: MenuContentRenderProps) => React.ReactNode);
 }
 
 function Content({
   side = 'bottom',
-  align = 'center',
-  sideOffset = 8,
+  align = 'start',
+  sideOffset = 4,
   alignOffset = 0,
   avoidCollisions = true,
   closeOnOutsidePress = true,
@@ -231,9 +211,8 @@ function Content({
   children,
   style,
   ...viewProps
-}: PopoverContentProps) {
-  const { open, anchorRef, triggerRef, closePopover } =
-    usePopoverContext('Content');
+}: MenuContentProps) {
+  const { open, triggerRef, closeMenu } = useMenuContext('Content');
   const windowSize = useWindowDimensions();
 
   const [anchorRect, setAnchorRect] = useState<Rect | null>(null);
@@ -246,7 +225,7 @@ function Content({
       return;
     }
 
-    const node = anchorRef.current ?? triggerRef.current;
+    const node = triggerRef.current;
     if (node && typeof node.measureInWindow === 'function') {
       node.measureInWindow((x, y, width, height) => {
         setAnchorRect({ x, y, width, height });
@@ -254,7 +233,7 @@ function Content({
     } else {
       setAnchorRect({ x: 0, y: 0, width: 0, height: 0 });
     }
-  }, [open, anchorRef, triggerRef]);
+  }, [open, triggerRef]);
 
   if (!open && !forceMount) {
     return null;
@@ -280,25 +259,26 @@ function Content({
       visible={open}
       animationType="fade"
       statusBarTranslucent
-      onRequestClose={closePopover}
+      onRequestClose={closeMenu}
     >
       <Pressable
-        testID="anvil-popover-backdrop"
+        testID="anvil-menu-backdrop"
         style={StyleSheet.absoluteFill}
-        onPress={closeOnOutsidePress ? closePopover : undefined}
+        onPress={closeOnOutsidePress ? closeMenu : undefined}
         accessibilityRole={closeOnOutsidePress ? 'button' : undefined}
-        accessibilityLabel={closeOnOutsidePress ? 'Close popover' : undefined}
+        accessibilityLabel={closeOnOutsidePress ? 'Close menu' : undefined}
         accessibilityElementsHidden={!closeOnOutsidePress}
         importantForAccessibility={
           closeOnOutsidePress ? 'auto' : 'no-hide-descendants'
         }
       />
       <View
+        accessibilityRole="menu"
+        accessibilityViewIsModal
         onLayout={(event) => {
           const { width, height } = event.nativeEvent.layout;
           setContentSize({ width, height });
         }}
-        accessibilityViewIsModal
         style={[
           styles.content,
           position
@@ -315,7 +295,7 @@ function Content({
     </Modal>
   );
 }
-Content.displayName = 'Popover.Content';
+Content.displayName = 'Menu.Content';
 
 const styles = StyleSheet.create({
   content: {
@@ -331,33 +311,69 @@ const styles = StyleSheet.create({
   },
 });
 
-export type PopoverCloseProps = PressableProps;
+export type MenuItemRenderProps = {
+  disabled: boolean;
+};
 
-function Close({ onPress, ...pressableProps }: PopoverCloseProps) {
-  const { closePopover } = usePopoverContext('Close');
+export interface MenuItemProps extends Omit<
+  PressableProps,
+  'children' | 'onPress' | 'disabled'
+> {
+  disabled?: boolean;
+  /** Close the menu after this item is pressed. Defaults to true. */
+  closeOnSelect?: boolean;
+  onSelect?: () => void;
+  children: React.ReactNode | ((state: MenuItemRenderProps) => React.ReactNode);
+}
 
-  const handlePress = useCallback<NonNullable<PressableProps['onPress']>>(
-    (event) => {
-      closePopover();
-      onPress?.(event);
-    },
-    [closePopover, onPress]
-  );
+function Item({
+  disabled = false,
+  closeOnSelect = true,
+  onSelect,
+  children,
+  ...pressableProps
+}: MenuItemProps) {
+  const { closeMenu } = useMenuContext('Item');
+
+  const handlePress = useCallback(() => {
+    if (disabled) return;
+    onSelect?.();
+    if (closeOnSelect) closeMenu();
+  }, [disabled, onSelect, closeOnSelect, closeMenu]);
 
   return (
     <Pressable
-      accessibilityRole="button"
+      accessibilityRole="menuitem"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
       onPress={handlePress}
       {...pressableProps}
-    />
+    >
+      {typeof children === 'function' ? children({ disabled }) : children}
+    </Pressable>
   );
 }
-Close.displayName = 'Popover.Close';
+Item.displayName = 'Menu.Item';
 
-export const Popover = {
+export type MenuSeparatorProps = ViewProps;
+
+function Separator(props: MenuSeparatorProps) {
+  return <View importantForAccessibility="no" {...props} />;
+}
+Separator.displayName = 'Menu.Separator';
+
+export type MenuLabelProps = TextProps;
+
+function Label(props: MenuLabelProps) {
+  return <Text {...props} />;
+}
+Label.displayName = 'Menu.Label';
+
+export const Menu = {
   Root,
-  Anchor,
   Trigger,
   Content,
-  Close,
+  Item,
+  Separator,
+  Label,
 };

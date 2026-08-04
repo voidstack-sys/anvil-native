@@ -1,8 +1,4 @@
-import {
-  computePosition,
-  type Rect,
-  type Size,
-} from '../primitives/Popover/positioning';
+import { computePosition, type Rect, type Size } from '../internal/positioning';
 
 const WINDOW: Size = { width: 400, height: 800 };
 const CONTENT: Size = { width: 100, height: 50 };

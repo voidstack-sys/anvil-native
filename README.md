@@ -321,11 +321,53 @@ Supports the same controlled (`open`/`onOpenChange`) / uncontrolled
 `close`/`toggle`/`isOpen`), and dev-mode controlled/uncontrolled warning as
 `Popover`.
 
+### Menu
+
+```tsx
+import { Menu } from 'anvil-native';
+import { Text, View } from 'react-native';
+
+function RowMenu() {
+  return (
+    <Menu.Root>
+      <Menu.Trigger>
+        <Text>⋮</Text>
+      </Menu.Trigger>
+      <Menu.Content align="start" style={{ backgroundColor: 'white', paddingVertical: 8 }}>
+        <Menu.Label>Actions</Menu.Label>
+        <Menu.Item onSelect={() => console.log('edit')}>
+          <Text>Edit</Text>
+        </Menu.Item>
+        <Menu.Separator style={{ height: 1, backgroundColor: '#ccc' }} />
+        <Menu.Item onSelect={() => console.log('delete')}>
+          <Text>Delete</Text>
+        </Menu.Item>
+      </Menu.Content>
+    </Menu.Root>
+  );
+}
+```
+
+`Menu` is what `Popover` becomes once you add selectable actions: `Menu.Content`
+is anchored and positioned relative to `Menu.Trigger` exactly like
+`Popover.Content` (same `side`/`align`/`sideOffset`/`alignOffset`/
+`avoidCollisions`/`closeOnOutsidePress` props, same auto-flip-and-clamp
+behavior), and gets `accessibilityRole="menu"`. `Menu.Item` gets
+`accessibilityRole="menuitem"`, calls its `onSelect` and then closes the menu
+when pressed — pass `closeOnSelect={false}` to keep it open (handy for an
+item that itself opens a submenu or a confirmation). `Menu.Separator` and
+`Menu.Label` are unstyled structural helpers for grouping items. Supports the
+same `disabled`, imperative ref (`MenuHandle`), and dev-mode
+controlled/uncontrolled warning as `Popover`.
+
+If you need a list of *choosable, stateful* options instead of one-shot
+actions (e.g. "sort by: name/date/size" with a persisted current value),
+that's `Select`'s job, not `Menu`'s — see below.
+
 ## Coming soon
 
-`Select` and `Menu` are on the roadmap, following the same headless,
-compound-component pattern — likely built on top of `Popover`, which
-already solves positioning and the overlay.
+`Select` is on the roadmap, following the same headless, compound-component
+pattern and building on the same positioning engine as `Popover`/`Menu`.
 
 ## Contributing
 

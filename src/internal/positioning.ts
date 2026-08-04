@@ -10,15 +10,15 @@ export interface Size {
   height: number;
 }
 
-export type PopoverSide = 'top' | 'bottom' | 'left' | 'right';
-export type PopoverAlign = 'start' | 'center' | 'end';
+export type FloatingSide = 'top' | 'bottom' | 'left' | 'right';
+export type FloatingAlign = 'start' | 'center' | 'end';
 
 export interface ComputePositionOptions {
   anchorRect: Rect;
   contentSize: Size;
   windowSize: Size;
-  side: PopoverSide;
-  align: PopoverAlign;
+  side: FloatingSide;
+  align: FloatingAlign;
   sideOffset: number;
   alignOffset: number;
   avoidCollisions: boolean;
@@ -28,10 +28,10 @@ export interface ComputedPosition {
   top: number;
   left: number;
   /** The side actually used, which may differ from the requested `side` if it got flipped to fit. */
-  side: PopoverSide;
+  side: FloatingSide;
 }
 
-const OPPOSITE_SIDE: Record<PopoverSide, PopoverSide> = {
+const OPPOSITE_SIDE: Record<FloatingSide, FloatingSide> = {
   top: 'bottom',
   bottom: 'top',
   left: 'right',
@@ -44,7 +44,7 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 function primaryAxisPosition(
-  side: PopoverSide,
+  side: FloatingSide,
   anchorRect: Rect,
   contentSize: Size,
   sideOffset: number
@@ -62,7 +62,7 @@ function primaryAxisPosition(
 }
 
 function fitsOnSide(
-  side: PopoverSide,
+  side: FloatingSide,
   anchorRect: Rect,
   contentSize: Size,
   windowSize: Size,
@@ -89,7 +89,7 @@ function crossAxisPosition(
   anchorStart: number,
   anchorSize: number,
   contentSize: number,
-  align: PopoverAlign,
+  align: FloatingAlign,
   offset: number
 ): number {
   switch (align) {

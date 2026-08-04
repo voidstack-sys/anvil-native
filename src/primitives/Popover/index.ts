@@ -10,11 +10,11 @@ export type {
   PopoverCloseProps,
 } from './Popover';
 export type {
-  PopoverSide,
-  PopoverAlign,
+  FloatingSide as PopoverSide,
+  FloatingAlign as PopoverAlign,
   Rect as PopoverRect,
   Size as PopoverSize,
   ComputePositionOptions,
   ComputedPosition,
-} from './positioning';
-export { computePosition } from './positioning';
+} from '../../internal/positioning';
+export { computePosition } from '../../internal/positioning';
