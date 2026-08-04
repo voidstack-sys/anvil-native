@@ -364,10 +364,58 @@ If you need a list of *choosable, stateful* options instead of one-shot
 actions (e.g. "sort by: name/date/size" with a persisted current value),
 that's `Select`'s job, not `Menu`'s — see below.
 
-## Coming soon
+### Select
 
-`Select` is on the roadmap, following the same headless, compound-component
-pattern and building on the same positioning engine as `Popover`/`Menu`.
+```tsx
+import { Select } from 'anvil-native';
+import { Text } from 'react-native';
+
+const FRUITS = [
+  { value: 'apple', label: 'Apple' },
+  { value: 'banana', label: 'Banana' },
+];
+
+function FruitSelect() {
+  return (
+    <Select.Root defaultValue="apple">
+      <Select.Trigger>
+        <Select.Value placeholder="Pick a fruit" />
+      </Select.Trigger>
+      <Select.Content align="start" style={{ backgroundColor: 'white', paddingVertical: 8 }}>
+        {FRUITS.map((fruit) => (
+          <Select.Item key={fruit.value} value={fruit.value}>
+            <Select.ItemText>{fruit.label}</Select.ItemText>
+          </Select.Item>
+        ))}
+      </Select.Content>
+    </Select.Root>
+  );
+}
+```
+
+`Select` combines `Popover`'s floating, anchored `Content` (same
+`side`/`align`/`sideOffset`/`alignOffset`/`avoidCollisions`/
+`closeOnOutsidePress` props and auto-flip-and-clamp behavior) with a
+persisted `value`, the same way `ToggleGroup` does for inline groups.
+`Select.Trigger` gets `accessibilityRole="combobox"`; `Select.Item` gets
+`accessibilityState={{ selected }}` and, by default, selecting it closes the
+menu (`closeOnSelect={false}` to keep it open). Supports controlled
+(`value`/`onValueChange`) and uncontrolled (`defaultValue`) selection,
+independently controlled/uncontrolled open state
+(`open`/`onOpenChange`/`defaultOpen`), root-level `disabled`, and an
+imperative ref (`SelectHandle` — `open`/`close`/`toggle`/`isOpen`/
+`getValue`/`setValue`).
+
+`Select.Value` needs to know the label of whichever item is currently
+selected, which it reads from `Select.ItemText` — wrap each item's visible
+label in `Select.ItemText` (a plain string child) rather than putting text
+directly in `Select.Item`, or `Select.Value` won't have anything to display
+and dev builds will warn you about it.
+
+**Dev-mode checks.** In development, `Select.Root` warns if you switch
+between controlled and uncontrolled `value` (or `open`) usage after the
+first render, if two sibling `Select.Item`s share the same `value`, or if
+`Select.ItemText` doesn't receive a plain string child.
 
 ## Contributing
 

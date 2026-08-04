@@ -5,6 +5,7 @@ import {
   Dialog,
   Menu,
   Popover,
+  Select,
   Tabs,
   ToggleGroup,
 } from 'anvil-native';
@@ -15,6 +16,13 @@ const ALIGN_OPTIONS: { value: Align; label: string }[] = [
   { value: 'left', label: 'Izq' },
   { value: 'center', label: 'Centro' },
   { value: 'right', label: 'Der' },
+];
+
+const FRUIT_OPTIONS = [
+  { value: 'apple', label: 'Manzana' },
+  { value: 'banana', label: 'Banana' },
+  { value: 'cherry', label: 'Cereza' },
+  { value: 'grape', label: 'Uva' },
 ];
 
 const FAQ_ITEMS = [
@@ -40,6 +48,7 @@ const FAQ_ITEMS = [
 
 export default function App() {
   const [align, setAlign] = useState<Align>('left');
+  const [fruit, setFruit] = useState<string | null>(null);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -234,6 +243,42 @@ export default function App() {
           </Menu.Content>
         </Menu.Root>
       </View>
+
+      <Text style={[styles.title, styles.sectionSpacing]}>
+        Anvil — demo de Select
+      </Text>
+
+      <Select.Root value={fruit} onValueChange={setFruit}>
+        <Select.Trigger style={styles.selectTrigger}>
+          {({ open }) => (
+            <>
+              <Select.Value
+                style={styles.selectTriggerLabel}
+                placeholder="Elegí una fruta"
+              />
+              <Text style={styles.chevron}>{open ? '▲' : '▼'}</Text>
+            </>
+          )}
+        </Select.Trigger>
+        <Select.Content align="start" style={styles.menuContent}>
+          {FRUIT_OPTIONS.map((option) => (
+            <Select.Item
+              key={option.value}
+              value={option.value}
+              style={styles.menuItem}
+            >
+              {({ selected }) => (
+                <View style={styles.selectItemRow}>
+                  <Select.ItemText style={styles.menuItemLabel}>
+                    {option.label}
+                  </Select.ItemText>
+                  {selected && <Text style={styles.selectCheck}>✓</Text>}
+                </View>
+              )}
+            </Select.Item>
+          ))}
+        </Select.Content>
+      </Select.Root>
     </ScrollView>
   );
 }
@@ -465,5 +510,31 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
     backgroundColor: '#ccc',
     marginVertical: 4,
+  },
+  selectTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    alignSelf: 'flex-start',
+    minWidth: 200,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#ccc',
+    gap: 12,
+  },
+  selectTriggerLabel: {
+    color: '#111',
+    fontSize: 15,
+  },
+  selectItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  selectCheck: {
+    color: '#111',
+    fontWeight: '700',
   },
 });
