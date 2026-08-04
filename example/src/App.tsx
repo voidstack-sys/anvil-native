@@ -1,20 +1,239 @@
-import { Text, View, StyleSheet } from 'react-native';
-import { multiply } from 'anvil-native';
+import { useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Accordion, Tabs, ToggleGroup } from 'anvil-native';
 
-const result = multiply(3, 7);
+type Align = 'left' | 'center' | 'right';
+
+const ALIGN_OPTIONS: { value: Align; label: string }[] = [
+  { value: 'left', label: 'Izq' },
+  { value: 'center', label: 'Centro' },
+  { value: 'right', label: 'Der' },
+];
+
+const FAQ_ITEMS = [
+  {
+    value: 'what',
+    question: '¿Qué es Anvil?',
+    answer:
+      'Una librería de primitivos de UI accesibles y sin estilos para React Native: vos ponés el diseño, Anvil pone la lógica y la accesibilidad.',
+  },
+  {
+    value: 'a11y',
+    question: '¿Es accesible?',
+    answer:
+      'Sí — cada primitivo expone los accessibilityRole/accessibilityState correctos (por ejemplo "expanded" en este Accordion) sin que tengas que pensarlo.',
+  },
+  {
+    value: 'style',
+    question: '¿Cómo le pongo mi propio estilo?',
+    answer:
+      'Pasando tu propio `style`, o usando los children como función para leer el estado (expanded/disabled) y decidir vos qué renderizar.',
+  },
+];
 
 export default function App() {
+  const [align, setAlign] = useState<Align>('left');
+
   return (
-    <View style={styles.container}>
-      <Text>Result: {result}</Text>
-    </View>
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.title}>Anvil — demo de Accordion</Text>
+
+      <Accordion.Root type="single" style={styles.accordion}>
+        {FAQ_ITEMS.map((item, index) => (
+          <Accordion.Item
+            key={item.value}
+            value={item.value}
+            style={[
+              styles.item,
+              index === FAQ_ITEMS.length - 1 && styles.lastItem,
+            ]}
+          >
+            <Accordion.Trigger style={styles.trigger}>
+              {({ expanded }) => (
+                <View style={styles.triggerRow}>
+                  <Text style={styles.question}>{item.question}</Text>
+                  <Text style={styles.chevron}>{expanded ? '−' : '+'}</Text>
+                </View>
+              )}
+            </Accordion.Trigger>
+            <Accordion.Content>
+              <Text style={styles.answer}>{item.answer}</Text>
+            </Accordion.Content>
+          </Accordion.Item>
+        ))}
+      </Accordion.Root>
+
+      <Text style={[styles.title, styles.sectionSpacing]}>
+        Anvil — demo de Tabs
+      </Text>
+
+      <Tabs.Root defaultValue="profile">
+        <Tabs.List style={styles.tabsList}>
+          <Tabs.Trigger value="profile" style={styles.tabTriggerHitSlop}>
+            {({ selected }) => (
+              <View style={[styles.tabPill, selected && styles.tabPillActive]}>
+                <Text
+                  style={[styles.tabLabel, selected && styles.tabLabelActive]}
+                >
+                  Perfil
+                </Text>
+              </View>
+            )}
+          </Tabs.Trigger>
+          <Tabs.Trigger value="settings" style={styles.tabTriggerHitSlop}>
+            {({ selected }) => (
+              <View style={[styles.tabPill, selected && styles.tabPillActive]}>
+                <Text
+                  style={[styles.tabLabel, selected && styles.tabLabelActive]}
+                >
+                  Ajustes
+                </Text>
+              </View>
+            )}
+          </Tabs.Trigger>
+        </Tabs.List>
+
+        <Tabs.Content value="profile" style={styles.tabContent}>
+          <Text style={styles.tabContentText}>
+            Acá iría el contenido de "Perfil".
+          </Text>
+        </Tabs.Content>
+        <Tabs.Content value="settings" style={styles.tabContent}>
+          <Text style={styles.tabContentText}>
+            Acá iría el contenido de "Ajustes".
+          </Text>
+        </Tabs.Content>
+      </Tabs.Root>
+
+      <Text style={[styles.title, styles.sectionSpacing]}>
+        Anvil — demo de ToggleGroup
+      </Text>
+
+      <ToggleGroup.Root
+        type="single"
+        value={align}
+        onValueChange={(next) => {
+          // Ignoramos el `null` (deselección) para forzar que siempre quede
+          // una opción elegida — el primitivo lo permite, nosotros decidimos
+          // no usarlo acá.
+          if (next) setAlign(next as Align);
+        }}
+        style={styles.tabsList}
+      >
+        {ALIGN_OPTIONS.map((option) => (
+          <ToggleGroup.Item
+            key={option.value}
+            value={option.value}
+            style={styles.tabTriggerHitSlop}
+          >
+            {({ selected }) => (
+              <View style={[styles.tabPill, selected && styles.tabPillActive]}>
+                <Text
+                  style={[styles.tabLabel, selected && styles.tabLabelActive]}
+                >
+                  {option.label}
+                </Text>
+              </View>
+            )}
+          </ToggleGroup.Item>
+        ))}
+      </ToggleGroup.Root>
+
+      <Text style={[styles.alignPreview, { textAlign: align }]}>
+        Este texto cambia de alineación según la opción elegida arriba.
+      </Text>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    padding: 24,
+    paddingTop: 64,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 16,
+  },
+  sectionSpacing: {
+    marginTop: 40,
+  },
+  accordion: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#ccc',
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  item: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: '#ccc',
+  },
+  lastItem: {
+    borderBottomWidth: 0,
+  },
+  trigger: {
+    padding: 16,
+  },
+  triggerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'center',
+  },
+  question: {
+    fontSize: 16,
+    fontWeight: '500',
+    flexShrink: 1,
+    paddingRight: 12,
+  },
+  chevron: {
+    fontSize: 18,
+    color: '#666',
+  },
+  answer: {
+    padding: 16,
+    paddingTop: 0,
+    color: '#444',
+    lineHeight: 20,
+  },
+  tabsList: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 16,
+  },
+  tabTriggerHitSlop: {
+    borderRadius: 999,
+  },
+  tabPill: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    backgroundColor: '#eee',
+  },
+  tabPillActive: {
+    backgroundColor: '#111',
+  },
+  tabLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#444',
+  },
+  tabLabelActive: {
+    color: '#fff',
+  },
+  tabContent: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#ccc',
+    borderRadius: 12,
+    padding: 16,
+  },
+  tabContentText: {
+    color: '#444',
+    lineHeight: 20,
+  },
+  alignPreview: {
+    marginTop: 16,
+    color: '#444',
+    lineHeight: 20,
   },
 });
