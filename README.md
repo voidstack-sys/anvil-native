@@ -50,7 +50,35 @@ optional `collapsible` prop) or `type="multiple"` (any number of items open),
 and supports both controlled (`value`/`onValueChange`) and uncontrolled
 (`defaultValue`) usage. `Accordion.Trigger`'s `accessibilityState.expanded` is
 kept in sync automatically, and `Accordion.Content` unmounts when closed
-unless you pass `forceMount` (useful when animating height yourself).
+unless you pass `forceMount` (useful when animating height yourself). Pass
+`disabled` on an `Accordion.Item` to disable just that item, or on
+`Accordion.Root` to disable the whole group at once.
+
+**Imperative control.** Attach a ref to `Accordion.Root` to open/close items
+from outside without owning the state yourself:
+
+```tsx
+import { useRef } from 'react';
+import { Accordion, type AccordionHandle } from 'anvil-native';
+
+function Example() {
+  const accordionRef = useRef<AccordionHandle>(null);
+  // accordionRef.current?.open('section-1')
+  // accordionRef.current?.close('section-1')
+  // accordionRef.current?.toggle('section-1')
+  // accordionRef.current?.getValue() // -> string[]
+  return <Accordion.Root ref={accordionRef} type="single">{/* ... */}</Accordion.Root>;
+}
+```
+
+In controlled mode, `open`/`close`/`toggle` call your `onValueChange` instead
+of mutating anything internally — same as pressing a trigger would.
+
+**Dev-mode checks.** In development, `Accordion.Root` warns (via
+`console.error`, once) if you switch between controlled and uncontrolled
+usage after the first render, if `type` changes after mount, or if two
+`Accordion.Item`s share the same `value`. These checks are stripped in
+production builds.
 
 See the [example app](example/src/App.tsx) for a fully styled demo.
 
@@ -91,7 +119,29 @@ function ProfileTabs() {
 `accessibilityRole="tab"` with `accessibilityState.selected` kept in sync.
 Like `Accordion`, it supports controlled (`value`/`onValueChange`) and
 uncontrolled (`defaultValue`) usage — note that without either, no tab starts
-selected and no `Tabs.Content` renders until one is picked.
+selected and no `Tabs.Content` renders until one is picked. Pass `disabled`
+on a `Tabs.Trigger` to disable just that tab, or on `Tabs.Root` to disable
+the whole group at once.
+
+**Imperative control.** Attach a ref to `Tabs.Root` to switch tabs from
+outside without owning the state yourself:
+
+```tsx
+import { useRef } from 'react';
+import { Tabs, type TabsHandle } from 'anvil-native';
+
+function Example() {
+  const tabsRef = useRef<TabsHandle>(null);
+  // tabsRef.current?.select('settings')
+  // tabsRef.current?.getValue() // -> string | null
+  return <Tabs.Root ref={tabsRef}>{/* ... */}</Tabs.Root>;
+}
+```
+
+**Dev-mode checks.** In development, `Tabs.Root` warns (via `console.error`,
+once) if you switch between controlled and uncontrolled usage after the
+first render, or if two `Tabs.Trigger`s share the same `value`. Stripped in
+production builds.
 
 ### ToggleGroup
 
@@ -138,6 +188,31 @@ pressing the already-selected item deselects it (`onValueChange` fires with
 `null`). If you need "always exactly one selected," ignore the `null` in your
 own `onValueChange` handler, as the example above does implicitly by only
 calling `onChange` when `next` is truthy.
+
+Pass `disabled` on a `ToggleGroup.Item` to disable just that item, or on
+`ToggleGroup.Root` to disable the whole group at once.
+
+**Imperative control.** Attach a ref to `ToggleGroup.Root` to select/deselect
+items from outside without owning the state yourself:
+
+```tsx
+import { useRef } from 'react';
+import { ToggleGroup, type ToggleGroupHandle } from 'anvil-native';
+
+function Example() {
+  const groupRef = useRef<ToggleGroupHandle>(null);
+  // groupRef.current?.select('bold')
+  // groupRef.current?.deselect('bold')
+  // groupRef.current?.toggle('bold')
+  // groupRef.current?.getValue() // -> string[]
+  return <ToggleGroup.Root ref={groupRef} type="multiple">{/* ... */}</ToggleGroup.Root>;
+}
+```
+
+**Dev-mode checks.** In development, `ToggleGroup.Root` warns (via
+`console.error`, once) if you switch between controlled and uncontrolled
+usage after the first render, if `type` changes after mount, or if two
+`ToggleGroup.Item`s share the same `value`. Stripped in production builds.
 
 ## Coming soon
 

@@ -1,8 +1,11 @@
 import React, {
   createContext,
+  forwardRef,
   useCallback,
   useContext,
+  useImperativeHandle,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -11,10 +14,22 @@ import {
   type PressableProps,
   type ViewProps,
 } from 'react-native';
+import {
+  controlledChangeMessage,
+  typeChangeMessage,
+  useWarnOnceWhen,
+} from '../../internal/devWarnings';
+import {
+  useRegisteredValue,
+  useValueRegistry,
+} from '../../internal/useValueRegistry';
 
 interface AccordionContextValue {
   values: string[];
+  disabled: boolean;
   toggleValue: (value: string) => void;
+  registerValue: (value: string) => void;
+  unregisterValue: (value: string) => void;
 }
 
 const AccordionContext = createContext<AccordionContextValue | null>(null);
@@ -28,6 +43,156 @@ function useAccordionContext(component: string): AccordionContextValue {
   }
   return context;
 }
+
+interface AccordionBaseRootProps extends Omit<ViewProps, 'children'> {
+  /** Disables every item in the group, regardless of each item's own `disabled` prop. */
+  disabled?: boolean;
+  children: React.ReactNode;
+}
+
+interface AccordionSingleRootProps extends AccordionBaseRootProps {
+  type: 'single';
+  /** Whether the open item can be closed by pressing it again. Defaults to true. */
+  collapsible?: boolean;
+  value?: string | null;
+  defaultValue?: string | null;
+  onValueChange?: (value: string | null) => void;
+}
+
+interface AccordionMultipleRootProps extends AccordionBaseRootProps {
+  type: 'multiple';
+  value?: string[];
+  defaultValue?: string[];
+  onValueChange?: (value: string[]) => void;
+}
+
+export type AccordionRootProps =
+  AccordionSingleRootProps | AccordionMultipleRootProps;
+
+export interface AccordionHandle {
+  /** Opens `value`. In `type="single"` mode this closes whatever else was open. */
+  open: (value: string) => void;
+  close: (value: string) => void;
+  toggle: (value: string) => void;
+  getValue: () => string[];
+}
+
+function normalizeValues(
+  props: AccordionRootProps,
+  source: 'value' | 'defaultValue'
+): string[] {
+  if (props.type === 'single') {
+    const raw = props[source];
+    return raw ? [raw] : [];
+  }
+  return props[source] ?? [];
+}
+
+const Root = forwardRef<AccordionHandle, AccordionRootProps>(
+  function AccordionRoot(props, ref) {
+    const { type, children, disabled = false, ...viewProps } = props;
+    const isControlled = props.value !== undefined;
+
+    const initialType = useRef(type).current;
+    const initialIsControlled = useRef(isControlled).current;
+
+    useWarnOnceWhen(type !== initialType, () =>
+      typeChangeMessage('Accordion.Root', initialType, type)
+    );
+    useWarnOnceWhen(isControlled !== initialIsControlled, () =>
+      controlledChangeMessage(
+        'Accordion.Root',
+        initialIsControlled,
+        isControlled
+      )
+    );
+
+    const [uncontrolledValues, setUncontrolledValues] = useState<string[]>(() =>
+      normalizeValues(props, 'defaultValue')
+    );
+
+    const values = isControlled
+      ? normalizeValues(props, 'value')
+      : uncontrolledValues;
+
+    const commitValues = useCallback(
+      (nextValues: string[]) => {
+        if (!isControlled) {
+          setUncontrolledValues(nextValues);
+        }
+        if (type === 'single') {
+          (props as AccordionSingleRootProps).onValueChange?.(
+            nextValues[0] ?? null
+          );
+        } else {
+          (props as AccordionMultipleRootProps).onValueChange?.(nextValues);
+        }
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [type, isControlled, props.type]
+    );
+
+    const toggleValue = useCallback(
+      (itemValue: string) => {
+        const isOpen = values.includes(itemValue);
+        const collapsible =
+          type === 'single'
+            ? ((props as AccordionSingleRootProps).collapsible ?? true)
+            : true;
+        const nextValues =
+          type === 'single'
+            ? isOpen
+              ? collapsible
+                ? []
+                : [itemValue]
+              : [itemValue]
+            : isOpen
+              ? values.filter((v) => v !== itemValue)
+              : [...values, itemValue];
+
+        commitValues(nextValues);
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [type, values, commitValues, props.type]
+    );
+
+    const { register: registerValue, unregister: unregisterValue } =
+      useValueRegistry('Accordion');
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        open: (itemValue: string) => {
+          if (values.includes(itemValue)) return;
+          commitValues(
+            type === 'single' ? [itemValue] : [...values, itemValue]
+          );
+        },
+        close: (itemValue: string) => {
+          if (!values.includes(itemValue)) return;
+          commitValues(values.filter((v) => v !== itemValue));
+        },
+        toggle: toggleValue,
+        getValue: () => values,
+      }),
+      [values, type, commitValues, toggleValue]
+    );
+
+    const contextValue = useMemo(
+      () => ({ values, disabled, toggleValue, registerValue, unregisterValue }),
+      [values, disabled, toggleValue, registerValue, unregisterValue]
+    );
+
+    return (
+      <AccordionContext.Provider value={contextValue}>
+        <View accessibilityState={{ disabled }} {...viewProps}>
+          {children}
+        </View>
+      </AccordionContext.Provider>
+    );
+  }
+);
+Root.displayName = 'Accordion.Root';
 
 interface AccordionItemContextValue {
   value: string;
@@ -49,95 +214,6 @@ function useAccordionItemContext(component: string): AccordionItemContextValue {
   return context;
 }
 
-interface AccordionSingleRootProps {
-  type: 'single';
-  /** Whether the open item can be closed by pressing it again. Defaults to true. */
-  collapsible?: boolean;
-  value?: string | null;
-  defaultValue?: string | null;
-  onValueChange?: (value: string | null) => void;
-  children: React.ReactNode;
-}
-
-interface AccordionMultipleRootProps {
-  type: 'multiple';
-  value?: string[];
-  defaultValue?: string[];
-  onValueChange?: (value: string[]) => void;
-  children: React.ReactNode;
-}
-
-export type AccordionRootProps = (
-  AccordionSingleRootProps | AccordionMultipleRootProps
-) &
-  Omit<ViewProps, 'children'>;
-
-function normalizeValues(
-  props: AccordionRootProps,
-  source: 'value' | 'defaultValue'
-): string[] {
-  if (props.type === 'single') {
-    const raw = props[source];
-    return raw ? [raw] : [];
-  }
-  return props[source] ?? [];
-}
-
-function Root(props: AccordionRootProps) {
-  const { type, children, ...viewProps } = props;
-  const isControlled = props.value !== undefined;
-
-  const [uncontrolledValues, setUncontrolledValues] = useState<string[]>(() =>
-    normalizeValues(props, 'defaultValue')
-  );
-
-  const values = isControlled
-    ? normalizeValues(props, 'value')
-    : uncontrolledValues;
-
-  const toggleValue = useCallback(
-    (itemValue: string) => {
-      const isOpen = values.includes(itemValue);
-      let nextValues: string[];
-
-      if (type === 'single') {
-        const collapsible =
-          (props as AccordionSingleRootProps).collapsible ?? true;
-        nextValues = isOpen ? (collapsible ? [] : [itemValue]) : [itemValue];
-      } else {
-        nextValues = isOpen
-          ? values.filter((v) => v !== itemValue)
-          : [...values, itemValue];
-      }
-
-      if (!isControlled) {
-        setUncontrolledValues(nextValues);
-      }
-
-      if (type === 'single') {
-        (props as AccordionSingleRootProps).onValueChange?.(
-          nextValues[0] ?? null
-        );
-      } else {
-        (props as AccordionMultipleRootProps).onValueChange?.(nextValues);
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [type, values, isControlled, props.type]
-  );
-
-  const contextValue = useMemo(
-    () => ({ values, toggleValue }),
-    [values, toggleValue]
-  );
-
-  return (
-    <AccordionContext.Provider value={contextValue}>
-      <View {...viewProps}>{children}</View>
-    </AccordionContext.Provider>
-  );
-}
-
 export interface AccordionItemProps extends Omit<ViewProps, 'children'> {
   value: string;
   disabled?: boolean;
@@ -150,12 +226,20 @@ function Item({
   children,
   ...viewProps
 }: AccordionItemProps) {
-  const { values } = useAccordionContext('Item');
+  const {
+    values,
+    disabled: groupDisabled,
+    registerValue,
+    unregisterValue,
+  } = useAccordionContext('Item');
   const expanded = values.includes(value);
+  const effectiveDisabled = disabled || groupDisabled;
+
+  useRegisteredValue(registerValue, unregisterValue, value);
 
   const itemContextValue = useMemo(
-    () => ({ value, expanded, disabled }),
-    [value, expanded, disabled]
+    () => ({ value, expanded, disabled: effectiveDisabled }),
+    [value, expanded, effectiveDisabled]
   );
 
   return (
@@ -164,6 +248,7 @@ function Item({
     </AccordionItemContext.Provider>
   );
 }
+Item.displayName = 'Accordion.Item';
 
 export type AccordionTriggerRenderProps = {
   expanded: boolean;
@@ -201,6 +286,7 @@ function Trigger({ children, ...pressableProps }: AccordionTriggerProps) {
     </Pressable>
   );
 }
+Trigger.displayName = 'Accordion.Trigger';
 
 export type AccordionContentRenderProps = {
   expanded: boolean;
@@ -238,6 +324,7 @@ function Content({
     </View>
   );
 }
+Content.displayName = 'Accordion.Content';
 
 export const Accordion = {
   Root,

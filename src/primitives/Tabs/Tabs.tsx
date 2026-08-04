@@ -1,8 +1,11 @@
 import React, {
   createContext,
+  forwardRef,
   useCallback,
   useContext,
+  useImperativeHandle,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -11,10 +14,21 @@ import {
   type PressableProps,
   type ViewProps,
 } from 'react-native';
+import {
+  controlledChangeMessage,
+  useWarnOnceWhen,
+} from '../../internal/devWarnings';
+import {
+  useRegisteredValue,
+  useValueRegistry,
+} from '../../internal/useValueRegistry';
 
 interface TabsContextValue {
   value: string | null;
+  disabled: boolean;
   selectValue: (value: string) => void;
+  registerValue: (value: string) => void;
+  unregisterValue: (value: string) => void;
 }
 
 const TabsContext = createContext<TabsContextValue | null>(null);
@@ -35,17 +49,33 @@ export interface TabsRootProps extends Omit<ViewProps, 'children'> {
    */
   defaultValue?: string;
   onValueChange?: (value: string) => void;
+  /** Disables every trigger in the group, regardless of each trigger's own `disabled` prop. */
+  disabled?: boolean;
   children: React.ReactNode;
 }
 
-function Root({
-  value,
-  defaultValue,
-  onValueChange,
-  children,
-  ...viewProps
-}: TabsRootProps) {
+export interface TabsHandle {
+  select: (value: string) => void;
+  getValue: () => string | null;
+}
+
+const Root = forwardRef<TabsHandle, TabsRootProps>(function TabsRoot(
+  {
+    value,
+    defaultValue,
+    onValueChange,
+    disabled = false,
+    children,
+    ...viewProps
+  },
+  ref
+) {
   const isControlled = value !== undefined;
+  const initialIsControlled = useRef(isControlled).current;
+
+  useWarnOnceWhen(isControlled !== initialIsControlled, () =>
+    controlledChangeMessage('Tabs.Root', initialIsControlled, isControlled)
+  );
 
   const [uncontrolledValue, setUncontrolledValue] = useState<string | null>(
     defaultValue ?? null
@@ -63,17 +93,38 @@ function Root({
     [isControlled, onValueChange]
   );
 
+  const { register: registerValue, unregister: unregisterValue } =
+    useValueRegistry('Tabs');
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      select: selectValue,
+      getValue: () => activeValue,
+    }),
+    [selectValue, activeValue]
+  );
+
   const contextValue = useMemo(
-    () => ({ value: activeValue, selectValue }),
-    [activeValue, selectValue]
+    () => ({
+      value: activeValue,
+      disabled,
+      selectValue,
+      registerValue,
+      unregisterValue,
+    }),
+    [activeValue, disabled, selectValue, registerValue, unregisterValue]
   );
 
   return (
     <TabsContext.Provider value={contextValue}>
-      <View {...viewProps}>{children}</View>
+      <View accessibilityState={{ disabled }} {...viewProps}>
+        {children}
+      </View>
     </TabsContext.Provider>
   );
-}
+});
+Root.displayName = 'Tabs.Root';
 
 export type TabsListProps = ViewProps;
 
@@ -84,6 +135,7 @@ function List({ children, ...viewProps }: TabsListProps) {
     </View>
   );
 }
+List.displayName = 'Tabs.List';
 
 export type TabsTriggerRenderProps = {
   selected: boolean;
@@ -102,12 +154,21 @@ export interface TabsTriggerProps extends Omit<
 
 function Trigger({
   value,
-  disabled = false,
+  disabled: triggerDisabled = false,
   children,
   ...pressableProps
 }: TabsTriggerProps) {
-  const { value: activeValue, selectValue } = useTabsContext('Trigger');
+  const {
+    value: activeValue,
+    disabled: groupDisabled,
+    selectValue,
+    registerValue,
+    unregisterValue,
+  } = useTabsContext('Trigger');
   const selected = activeValue === value;
+  const disabled = triggerDisabled || groupDisabled;
+
+  useRegisteredValue(registerValue, unregisterValue, value);
 
   const handlePress = useCallback(() => {
     if (disabled) return;
@@ -128,6 +189,7 @@ function Trigger({
     </Pressable>
   );
 }
+Trigger.displayName = 'Tabs.Trigger';
 
 export type TabsContentRenderProps = {
   selected: boolean;
@@ -167,6 +229,7 @@ function Content({
     </View>
   );
 }
+Content.displayName = 'Tabs.Content';
 
 export const Tabs = {
   Root,
