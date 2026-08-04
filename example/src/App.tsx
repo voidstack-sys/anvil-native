@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Accordion, Popover, Tabs, ToggleGroup } from 'anvil-native';
+import { Accordion, Dialog, Popover, Tabs, ToggleGroup } from 'anvil-native';
 
 type Align = 'left' | 'center' | 'right';
 
@@ -171,6 +171,37 @@ export default function App() {
           </Popover.Content>
         </Popover.Root>
       </View>
+
+      <Text style={[styles.title, styles.sectionSpacing]}>
+        Anvil — demo de Dialog
+      </Text>
+
+      <Dialog.Root>
+        <Dialog.Trigger style={styles.dialogTriggerButton}>
+          <Text style={styles.dialogTriggerLabel}>Eliminar item</Text>
+        </Dialog.Trigger>
+        <Dialog.Content>
+          <Dialog.Overlay style={styles.dialogOverlay} />
+          <View style={styles.dialogCenterWrapper} pointerEvents="box-none">
+            <View style={styles.dialogPanel}>
+              <Dialog.Title style={styles.dialogTitle}>
+                ¿Eliminar este item?
+              </Dialog.Title>
+              <Dialog.Description style={styles.dialogDescription}>
+                Esta acción no se puede deshacer.
+              </Dialog.Description>
+              <View style={styles.dialogActions}>
+                <Dialog.Close style={styles.dialogCancelButton}>
+                  <Text style={styles.dialogCancelLabel}>Cancelar</Text>
+                </Dialog.Close>
+                <Dialog.Close style={styles.dialogConfirmButton}>
+                  <Text style={styles.dialogConfirmLabel}>Eliminar</Text>
+                </Dialog.Close>
+              </View>
+            </View>
+          </View>
+        </Dialog.Content>
+      </Dialog.Root>
     </ScrollView>
   );
 }
@@ -303,6 +334,66 @@ const styles = StyleSheet.create({
   },
   popoverCloseLabel: {
     color: '#111',
+    fontWeight: '600',
+  },
+  dialogTriggerButton: {
+    alignSelf: 'flex-start',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: '#b91c1c',
+  },
+  dialogTriggerLabel: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  dialogOverlay: {
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+  dialogCenterWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  dialogPanel: {
+    width: '100%',
+    maxWidth: 320,
+    borderRadius: 16,
+    padding: 20,
+    backgroundColor: '#fff',
+  },
+  dialogTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  dialogDescription: {
+    color: '#444',
+    lineHeight: 20,
+  },
+  dialogActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+    marginTop: 20,
+  },
+  dialogCancelButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  dialogCancelLabel: {
+    color: '#444',
+    fontWeight: '600',
+  },
+  dialogConfirmButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: '#b91c1c',
+  },
+  dialogConfirmLabel: {
+    color: '#fff',
     fontWeight: '600',
   },
 });

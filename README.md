@@ -275,11 +275,57 @@ function Example() {
 `console.error`, once) if you switch between controlled and uncontrolled
 `open` usage after the first render. Stripped in production builds.
 
+### Dialog
+
+```tsx
+import { Dialog } from 'anvil-native';
+import { Text, View } from 'react-native';
+
+function DeleteDialog() {
+  return (
+    <Dialog.Root>
+      <Dialog.Trigger>
+        <Text>Delete</Text>
+      </Dialog.Trigger>
+      <Dialog.Content>
+        <Dialog.Overlay style={{ backgroundColor: 'rgba(0,0,0,0.4)' }} />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="box-none">
+          <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 16 }}>
+            <Dialog.Title>Delete this item?</Dialog.Title>
+            <Dialog.Description>This can't be undone.</Dialog.Description>
+            <Dialog.Close>
+              <Text>Cancel</Text>
+            </Dialog.Close>
+          </View>
+        </View>
+      </Dialog.Content>
+    </Dialog.Root>
+  );
+}
+```
+
+Unlike `Popover`, `Dialog.Content` isn't anchored or positioned relative to
+the trigger — it's a centered, blocking overlay, so you lay out the panel
+yourself (as shown above) inside `Dialog.Content`, typically with
+`Dialog.Overlay` (a styleable, closes-on-press-by-default backdrop — pass
+`closeOnPress={false}` to require an explicit close action instead) as its
+first child and a centering wrapper with `pointerEvents="box-none"` so taps
+outside your panel still reach the overlay underneath.
+
+`Dialog.Title` and `Dialog.Description` aren't just semantic labels — they
+register themselves with `Dialog.Content` so it gets a matching
+`accessibilityLabelledBy` (Android) / `aria-describedby`, so a screen reader
+entering the dialog announces the right name and description automatically.
+Supports the same controlled (`open`/`onOpenChange`) / uncontrolled
+(`defaultOpen`), `disabled`, imperative ref (`DialogHandle` — `open`/
+`close`/`toggle`/`isOpen`), and dev-mode controlled/uncontrolled warning as
+`Popover`.
+
 ## Coming soon
 
-More primitives (`Select`, `Dialog`, `Menu`) are on the roadmap, following
-the same headless, compound-component pattern — likely built on top of
-`Popover`, which already solves positioning and the overlay.
+`Select` and `Menu` are on the roadmap, following the same headless,
+compound-component pattern — likely built on top of `Popover`, which
+already solves positioning and the overlay.
 
 ## Contributing
 
