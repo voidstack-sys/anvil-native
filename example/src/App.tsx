@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Accordion, Tabs, ToggleGroup } from 'anvil-native';
+import { Accordion, Popover, Tabs, ToggleGroup } from 'anvil-native';
 
 type Align = 'left' | 'center' | 'right';
 
@@ -142,6 +142,35 @@ export default function App() {
       <Text style={[styles.alignPreview, { textAlign: align }]}>
         Este texto cambia de alineación según la opción elegida arriba.
       </Text>
+
+      <Text style={[styles.title, styles.sectionSpacing]}>
+        Anvil — demo de Popover
+      </Text>
+
+      <View style={styles.popoverRow}>
+        <Popover.Root>
+          <Popover.Trigger style={styles.popoverTrigger}>
+            <Text style={styles.popoverTriggerLabel}>?</Text>
+          </Popover.Trigger>
+          <Popover.Content
+            side="bottom"
+            align="start"
+            style={styles.popoverContent}
+          >
+            {({ side }) => (
+              <>
+                <Text style={styles.popoverText}>
+                  Se posicionó del lado "{side}" — si no entraba abajo, Anvil lo
+                  da vuelta solo.
+                </Text>
+                <Popover.Close style={styles.popoverCloseButton}>
+                  <Text style={styles.popoverCloseLabel}>Cerrar</Text>
+                </Popover.Close>
+              </>
+            )}
+          </Popover.Content>
+        </Popover.Root>
+      </View>
     </ScrollView>
   );
 }
@@ -235,5 +264,45 @@ const styles = StyleSheet.create({
     marginTop: 16,
     color: '#444',
     lineHeight: 20,
+  },
+  popoverRow: {
+    flexDirection: 'row',
+  },
+  popoverTrigger: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#111',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  popoverTriggerLabel: {
+    color: '#fff',
+    fontWeight: '700',
+  },
+  popoverContent: {
+    width: 220,
+    borderRadius: 12,
+    padding: 16,
+    backgroundColor: '#fff',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#ccc',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
+  popoverText: {
+    color: '#444',
+    lineHeight: 20,
+  },
+  popoverCloseButton: {
+    marginTop: 12,
+    alignSelf: 'flex-start',
+  },
+  popoverCloseLabel: {
+    color: '#111',
+    fontWeight: '600',
   },
 });

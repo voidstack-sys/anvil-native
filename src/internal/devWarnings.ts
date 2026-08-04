@@ -19,13 +19,15 @@ export function useWarnOnceWhen(
 export function controlledChangeMessage(
   componentName: string,
   wasControlled: boolean,
-  isControlled: boolean
+  isControlled: boolean,
+  propName: string = 'value'
 ): string {
+  const defaultPropName = propName === 'open' ? 'defaultOpen' : 'defaultValue';
   return (
     `${componentName} is changing from ${wasControlled ? 'controlled' : 'uncontrolled'} to ` +
     `${isControlled ? 'controlled' : 'uncontrolled'}. Decide between using a controlled or ` +
-    'uncontrolled component for the lifetime of the component: either always pass a `value` ' +
-    'prop, or never pass one and rely on `defaultValue`/internal state instead.'
+    `uncontrolled component for the lifetime of the component: either always pass a \`${propName}\` ` +
+    `prop, or never pass one and rely on \`${defaultPropName}\`/internal state instead.`
   );
 }
 

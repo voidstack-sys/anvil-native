@@ -214,10 +214,72 @@ function Example() {
 usage after the first render, if `type` changes after mount, or if two
 `ToggleGroup.Item`s share the same `value`. Stripped in production builds.
 
+### Popover
+
+```tsx
+import { Popover } from 'anvil-native';
+import { Text, View } from 'react-native';
+
+function InfoPopover() {
+  return (
+    <Popover.Root>
+      <Popover.Trigger>
+        <Text>?</Text>
+      </Popover.Trigger>
+      <Popover.Content side="bottom" align="start" style={{ padding: 16, backgroundColor: 'white' }}>
+        <Text>Some helpful info.</Text>
+        <Popover.Close>
+          <Text>Close</Text>
+        </Popover.Close>
+      </Popover.Content>
+    </Popover.Root>
+  );
+}
+```
+
+`Popover.Content` renders inside React Native's own `Modal` (no extra native
+dependencies), positioned relative to `Popover.Trigger` — or to
+`Popover.Anchor` instead, if you want the floating content anchored to a
+different element than the one that opens it (use one or the other, not
+both). Position it with `side` (`'top' | 'bottom' | 'left' | 'right'`,
+default `'bottom'`), `align` (`'start' | 'center' | 'end'`, default
+`'center'`), and `sideOffset`/`alignOffset`. With `avoidCollisions` (default
+`true`), it automatically flips to the opposite side and clamps its
+cross-axis position so it never renders off-screen — the render-prop form
+(`{ side }` shown above) tells you which side it actually landed on, handy
+for pointing an arrow/caret at the trigger.
+
+Pressing the backdrop closes the popover by default; set
+`closeOnOutsidePress={false}` to require an explicit `Popover.Close` (or
+imperative `.close()`) instead. Supports controlled (`open`/`onOpenChange`)
+and uncontrolled (`defaultOpen`) usage, and `disabled` on `Popover.Root`
+disables the trigger.
+
+**Imperative control.**
+
+```tsx
+import { useRef } from 'react';
+import { Popover, type PopoverHandle } from 'anvil-native';
+
+function Example() {
+  const popoverRef = useRef<PopoverHandle>(null);
+  // popoverRef.current?.open()
+  // popoverRef.current?.close()
+  // popoverRef.current?.toggle()
+  // popoverRef.current?.isOpen() // -> boolean
+  return <Popover.Root ref={popoverRef}>{/* ... */}</Popover.Root>;
+}
+```
+
+**Dev-mode checks.** In development, `Popover.Root` warns (via
+`console.error`, once) if you switch between controlled and uncontrolled
+`open` usage after the first render. Stripped in production builds.
+
 ## Coming soon
 
-More primitives (`Select`, `Popover`, `Dialog`, `Menu`) are on the roadmap,
-following the same headless, compound-component pattern.
+More primitives (`Select`, `Dialog`, `Menu`) are on the roadmap, following
+the same headless, compound-component pattern — likely built on top of
+`Popover`, which already solves positioning and the overlay.
 
 ## Contributing
 
