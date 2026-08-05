@@ -14,3 +14,6 @@ export * from './primitives/Slider';
 export * from './primitives/Separator';
 export * from './primitives/Collapsible';
 export * from './primitives/AspectRatio';
+export * from './primitives/Label';
+export * from './primitives/ContextMenu';
+export * from './primitives/Toast';

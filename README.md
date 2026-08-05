@@ -48,16 +48,19 @@ Native.
 | [`Collapsible`](#collapsible) | One standalone expand/collapse panel |
 | [`Separator`](#separator) | A decorative (or semantic) dividing line |
 | [`AspectRatio`](#aspectratio) | Constrain a child to a fixed width/height ratio |
+| [`Label`](#label) | A pressable, `nativeID`-bearing label for a control |
 | [`Popover`](#popover) | Floating, anchored content triggered by a press |
 | [`Dialog`](#dialog) | A centered, blocking modal |
 | [`AlertDialog`](#alertdialog) | A `Dialog` that can't be dismissed by accident, for destructive confirmations |
 | [`Menu`](#menu) | A floating list of one-shot actions |
+| [`ContextMenu`](#contextmenu) | A `Menu` triggered by long-press, anchored at the touch point |
 | [`Select`](#select) | A floating list of choosable, stateful options |
 | [`Checkbox`](#checkbox) | A boolean (or indeterminate) toggle |
 | [`Switch`](#switch) | A boolean on/off control |
 | [`RadioGroup`](#radiogroup) | Exactly one selection among several options |
 | [`Slider`](#slider) | Drag (or single- or multi-thumb range) to pick a numeric value |
 | [`Progress`](#progress) | A determinate or indeterminate progress indicator |
+| [`Toast`](#toast) | A non-blocking, auto-dismissing notification |
 
 ## Installation
 
@@ -426,7 +429,9 @@ controlled/uncontrolled warning as `Popover`.
 
 If you need a list of *choosable, stateful* options instead of one-shot
 actions (e.g. "sort by: name/date/size" with a persisted current value),
-that's `Select`'s job, not `Menu`'s — see below.
+that's `Select`'s job, not `Menu`'s — see below. If you need the menu
+triggered by a long-press on arbitrary content instead of a dedicated
+trigger button, that's `ContextMenu` (see below), not `Menu`.
 
 ### Select
 
@@ -834,6 +839,142 @@ unlike the CSS story `AspectRatio` originally solved on the web).
 
 **Dev-mode checks.** Warns (via `console.error`, once) if `ratio` isn't
 greater than 0.
+
+### Label
+
+```tsx
+import { Label } from 'anvil-native';
+import { useRef } from 'react';
+import { Checkbox, type CheckboxHandle } from 'anvil-native';
+
+function AgreeToTerms() {
+  const checkboxRef = useRef<CheckboxHandle>(null);
+  return (
+    <>
+      <Checkbox.Root ref={checkboxRef}>{/* ... */}</Checkbox.Root>
+      <Label onPress={() => checkboxRef.current?.toggle()}>
+        I agree to the terms
+      </Label>
+    </>
+  );
+}
+```
+
+React Native has no `<label for>` — the OS-level link between a label and
+its control (`accessibilityLabelledBy`) has to be set on the *control*
+itself, not inferred from nearby markup the way HTML does. `Label` can't
+change that, but it gives you the two pieces you actually need: a stable
+`nativeID` (pass it to your control's `accessibilityLabelledBy`, or read it
+off the render-prop: `<Label>{({ id }) => ...}</Label>`), and a pressable
+`Text` you can wire an `onPress` onto so tapping the label text also
+activates the control — a bigger, more forgiving tap target than the
+control alone, which is exactly what `Dialog.Title` already does for you
+internally. `Label` makes that same pattern available in your own
+compositions.
+
+### ContextMenu
+
+```tsx
+import { ContextMenu } from 'anvil-native';
+import { Text, View } from 'react-native';
+
+function RowWithContextMenu() {
+  return (
+    <ContextMenu.Root>
+      <ContextMenu.Trigger>
+        <View>
+          <Text>Long-press me</Text>
+        </View>
+      </ContextMenu.Trigger>
+      <ContextMenu.Content style={{ backgroundColor: 'white', paddingVertical: 8 }}>
+        <ContextMenu.Item onSelect={() => console.log('edit')}>
+          <Text>Edit</Text>
+        </ContextMenu.Item>
+        <ContextMenu.Item onSelect={() => console.log('delete')}>
+          <Text>Delete</Text>
+        </ContextMenu.Item>
+      </ContextMenu.Content>
+    </ContextMenu.Root>
+  );
+}
+```
+
+`ContextMenu` is `Menu` triggered by a long-press instead of a tap, and
+anchored at the touch point instead of the trigger's bounding box —
+everything else (`Item`/`Separator`/`Label`, `side`/`align`/`sideOffset`/
+`alignOffset`/`avoidCollisions`/`closeOnOutsidePress`, the auto-flip-and-
+clamp behavior, `accessibilityRole="menu"`/`"menuitem"`) is identical to
+`Menu`. The imperative ref (`ContextMenuHandle`) is the one real API
+difference: `open` takes a point (`{ x, y }`, e.g. from a
+`GestureResponderEvent`'s `pageX`/`pageY`) instead of nothing, since there's
+no trigger view to measure — there's also no `toggle`, since a long-press
+gesture only ever means "open," never "open or close depending on state."
+
+**Dev-mode checks.** Same controlled/uncontrolled `open` warning as `Menu`.
+
+### Toast
+
+```tsx
+import { Toast } from 'anvil-native';
+import { Text, View } from 'react-native';
+import { useRef } from 'react';
+import type { ToastHandle } from 'anvil-native';
+
+function SaveButton() {
+  const toastRef = useRef<ToastHandle>(null);
+  return (
+    <Toast.Provider>
+      <Text onPress={() => toastRef.current?.open()}>Save</Text>
+      <Toast.Viewport
+        pointerEvents="box-none"
+        style={{ position: 'absolute', top: 0, left: 0, right: 0 }}
+      >
+        <Toast.Root ref={toastRef} style={{ backgroundColor: 'black', padding: 16 }}>
+          <Toast.Title style={{ color: 'white' }}>Saved</Toast.Title>
+          <Toast.Description style={{ color: '#ccc' }}>
+            Your changes were saved.
+          </Toast.Description>
+        </Toast.Root>
+      </Toast.Viewport>
+    </Toast.Provider>
+  );
+}
+```
+
+React Native has no portal API, so unlike Anvil's other overlays `Toast`
+doesn't use `Modal` — a `Modal` would block touches to the rest of your app,
+which is exactly wrong for a non-blocking notification. `Toast.Viewport` is
+just a positioning container: place it wherever you want toasts to appear —
+top or bottom, it's entirely your `style` — and render your `Toast.Root`s
+into it; there's no built-in queue, the same way `Dialog` doesn't manage
+"only one dialog at a time" for you — track your own array of active toasts
+and `.map()` over it, same as any other list of stateful items.
+
+**Placement matters.** For the Viewport to actually float in a fixed screen
+position instead of scrolling away with the rest of your content, it needs
+to be a *sibling* of your `ScrollView` (or whatever scrolls), not a child of
+it — e.g. both nested inside one root `View`, with the Viewport
+absolutely-positioned (`position: 'absolute', top: 0` or `bottom: 0`,
+`left: 0`, `right: 0`) and `pointerEvents="box-none"` so it doesn't swallow
+touches to the content underneath it when no toast is showing.
+
+`Toast.Root` auto-dismisses after `duration` (default 5000ms, or
+`Toast.Provider`'s `defaultDuration` if you don't set one; pass
+`duration={Infinity}` to disable auto-dismiss). The dismiss timer restarts
+if `duration` changes while open. `Toast.Viewport` sets
+`accessibilityLiveRegion="polite"` so Android's TalkBack announces new
+toasts automatically; iOS has no equivalent view prop, so `Toast.Root`
+calls `AccessibilityInfo.announceForAccessibility` itself once `Title`/
+`Description`'s text is available.
+
+Supports controlled (`open`/`onOpenChange`) and uncontrolled (`defaultOpen`)
+usage, an imperative ref (`ToastHandle` — `open`/`close`/`toggle`/
+`isOpen`), and `Toast.Action`/`Toast.Close` (both close by default when
+pressed; `Action` additionally accepts `closeOnPress={false}` for actions
+like "Undo" that need to do work before the toast disappears).
+
+**Dev-mode checks.** Same controlled/uncontrolled `open` warning as the
+other overlay primitives.
 
 ## Contributing
 
