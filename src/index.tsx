@@ -5,3 +5,6 @@ export * from './primitives/Popover';
 export * from './primitives/Dialog';
 export * from './primitives/Menu';
 export * from './primitives/Select';
+export * from './primitives/Checkbox';
+export * from './primitives/Switch';
+export * from './primitives/RadioGroup';

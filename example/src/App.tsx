@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   Accordion,
+  Checkbox,
   Dialog,
   Menu,
   Popover,
+  RadioGroup,
   Select,
+  Switch,
   Tabs,
   ToggleGroup,
 } from 'anvil-native';
@@ -46,9 +49,27 @@ const FAQ_ITEMS = [
   },
 ];
 
+const CHECKLIST_ITEMS = ['Manzana', 'Banana', 'Cereza'];
+
+const SHIPPING_OPTIONS = [
+  { value: 'standard', label: 'Estándar (5-7 días)' },
+  { value: 'express', label: 'Express (2-3 días)' },
+  { value: 'overnight', label: 'Overnight (24hs)' },
+];
+
 export default function App() {
   const [align, setAlign] = useState<Align>('left');
   const [fruit, setFruit] = useState<string | null>(null);
+  const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
+
+  const checkedCount = CHECKLIST_ITEMS.filter(
+    (item) => checkedItems[item]
+  ).length;
+  const allChecked = checkedCount === CHECKLIST_ITEMS.length;
+  const selectAllChecked =
+    checkedCount === 0 ? false : allChecked ? true : 'indeterminate';
+  const [notifications, setNotifications] = useState(true);
+  const [shipping, setShipping] = useState('standard');
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -279,6 +300,126 @@ export default function App() {
           ))}
         </Select.Content>
       </Select.Root>
+
+      <Text style={[styles.title, styles.sectionSpacing]}>
+        Anvil — demo de Checkbox
+      </Text>
+
+      <Checkbox.Root
+        testID="select-all"
+        checked={selectAllChecked}
+        onCheckedChange={(next) => {
+          const nextChecked: Record<string, boolean> = {};
+          CHECKLIST_ITEMS.forEach((item) => {
+            nextChecked[item] = next;
+          });
+          setCheckedItems(nextChecked);
+        }}
+        style={styles.checkboxRow}
+      >
+        {({ checked }) => (
+          <>
+            <View
+              style={[styles.checkboxBox, checked && styles.checkboxBoxChecked]}
+            >
+              <Checkbox.Indicator>
+                <Text style={styles.checkboxMark}>
+                  {checked === 'indeterminate' ? '−' : '✓'}
+                </Text>
+              </Checkbox.Indicator>
+            </View>
+            <Text style={styles.checkboxLabel}>
+              Seleccionar todas ({checkedCount}/{CHECKLIST_ITEMS.length})
+            </Text>
+          </>
+        )}
+      </Checkbox.Root>
+
+      <View style={styles.checkboxList}>
+        {CHECKLIST_ITEMS.map((item) => (
+          <Checkbox.Root
+            key={item}
+            checked={checkedItems[item] ?? false}
+            onCheckedChange={(next) =>
+              setCheckedItems((prev) => ({ ...prev, [item]: next }))
+            }
+            style={styles.checkboxRow}
+          >
+            {({ checked }) => (
+              <>
+                <View
+                  style={[
+                    styles.checkboxBox,
+                    checked && styles.checkboxBoxChecked,
+                  ]}
+                >
+                  <Checkbox.Indicator>
+                    <Text style={styles.checkboxMark}>✓</Text>
+                  </Checkbox.Indicator>
+                </View>
+                <Text style={styles.checkboxLabel}>{item}</Text>
+              </>
+            )}
+          </Checkbox.Root>
+        ))}
+      </View>
+
+      <Text style={[styles.title, styles.sectionSpacing]}>
+        Anvil — demo de Switch
+      </Text>
+
+      <Switch.Root
+        checked={notifications}
+        onCheckedChange={setNotifications}
+        style={styles.switchRow}
+      >
+        {({ checked }) => (
+          <>
+            <Text style={styles.switchLabel}>Notificaciones</Text>
+            <View style={[styles.switchTrack, checked && styles.switchTrackOn]}>
+              <Switch.Thumb
+                style={[styles.switchThumb, checked && styles.switchThumbOn]}
+              />
+            </View>
+          </>
+        )}
+      </Switch.Root>
+
+      <Text style={[styles.title, styles.sectionSpacing]}>
+        Anvil — demo de RadioGroup
+      </Text>
+
+      <RadioGroup.Root
+        value={shipping}
+        onValueChange={(next) => next && setShipping(next)}
+        style={styles.radioGroup}
+      >
+        {SHIPPING_OPTIONS.map((option) => (
+          <RadioGroup.Item
+            key={option.value}
+            value={option.value}
+            style={styles.checkboxRow}
+          >
+            {({ selected }) => (
+              <>
+                <View style={styles.radioOuter}>
+                  <RadioGroup.Indicator>
+                    <View style={styles.radioInner} />
+                  </RadioGroup.Indicator>
+                </View>
+                <Text
+                  style={[
+                    styles.checkboxLabel,
+                    selected && styles.radioLabelSelected,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </>
+            )}
+          </RadioGroup.Item>
+        ))}
+      </RadioGroup.Root>
     </ScrollView>
   );
 }
@@ -536,5 +677,89 @@ const styles = StyleSheet.create({
   selectCheck: {
     color: '#111',
     fontWeight: '700',
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 8,
+  },
+  checkboxList: {
+    marginLeft: 16,
+    marginTop: 4,
+  },
+  checkboxBox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#999',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxBoxChecked: {
+    backgroundColor: '#111',
+    borderColor: '#111',
+  },
+  checkboxMark: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  checkboxLabel: {
+    fontSize: 15,
+    color: '#111',
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    maxWidth: 260,
+  },
+  switchLabel: {
+    fontSize: 15,
+    color: '#111',
+  },
+  switchTrack: {
+    width: 44,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#ccc',
+    padding: 2,
+    justifyContent: 'center',
+  },
+  switchTrackOn: {
+    backgroundColor: '#111',
+  },
+  switchThumb: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#fff',
+    alignSelf: 'flex-start',
+  },
+  switchThumbOn: {
+    alignSelf: 'flex-end',
+  },
+  radioGroup: {
+    marginTop: 4,
+  },
+  radioOuter: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1.5,
+    borderColor: '#999',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#111',
+  },
+  radioLabelSelected: {
+    fontWeight: '600',
   },
 });

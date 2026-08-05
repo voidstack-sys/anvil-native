@@ -22,7 +22,7 @@ export function controlledChangeMessage(
   isControlled: boolean,
   propName: string = 'value'
 ): string {
-  const defaultPropName = propName === 'open' ? 'defaultOpen' : 'defaultValue';
+  const defaultPropName = `default${propName.charAt(0).toUpperCase()}${propName.slice(1)}`;
   return (
     `${componentName} is changing from ${wasControlled ? 'controlled' : 'uncontrolled'} to ` +
     `${isControlled ? 'controlled' : 'uncontrolled'}. Decide between using a controlled or ` +

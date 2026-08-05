@@ -187,7 +187,8 @@ Note that `type="single"` behaves like a *toggle*, not a strict radio group:
 pressing the already-selected item deselects it (`onValueChange` fires with
 `null`). If you need "always exactly one selected," ignore the `null` in your
 own `onValueChange` handler, as the example above does implicitly by only
-calling `onChange` when `next` is truthy.
+calling `onChange` when `next` is truthy — or reach for `RadioGroup` (below),
+which enforces that at the primitive level instead of leaving it to you.
 
 Pass `disabled` on a `ToggleGroup.Item` to disable just that item, or on
 `ToggleGroup.Root` to disable the whole group at once.
@@ -416,6 +417,145 @@ and dev builds will warn you about it.
 between controlled and uncontrolled `value` (or `open`) usage after the
 first render, if two sibling `Select.Item`s share the same `value`, or if
 `Select.ItemText` doesn't receive a plain string child.
+
+### Checkbox
+
+```tsx
+import { Checkbox } from 'anvil-native';
+import { Text, View } from 'react-native';
+
+function AgreeCheckbox() {
+  return (
+    <Checkbox.Root>
+      {({ checked }) => (
+        <>
+          <View style={{ width: 20, height: 20, borderWidth: 1 }}>
+            <Checkbox.Indicator>
+              <Text>{checked === 'indeterminate' ? '−' : '✓'}</Text>
+            </Checkbox.Indicator>
+          </View>
+          <Text>I agree</Text>
+        </>
+      )}
+    </Checkbox.Root>
+  );
+}
+```
+
+`Checkbox.Root` is itself the pressable element (`accessibilityRole="checkbox"`)
+— there's no separate `Trigger`. `checked` is `boolean | 'indeterminate'`, for
+the classic "select all" case where only some of a group's items are checked;
+pressing an indeterminate checkbox always moves it to `true` (never back to
+`false`), matching how indeterminate checkboxes behave everywhere else.
+`Checkbox.Indicator` renders its children only while `checked` isn't `false`
+— pass `forceMount` to keep it mounted (e.g. to drive your own enter/exit
+animation) and read `checked` yourself to decide what to show.
+
+Supports controlled (`checked`/`onCheckedChange`) and uncontrolled
+(`defaultChecked`) usage, `disabled`, and an imperative ref (`CheckboxHandle`
+— `toggle`/`setChecked`/`getChecked`).
+
+**Dev-mode checks.** In development, `Checkbox.Root` warns (via
+`console.error`, once) if you switch between controlled and uncontrolled
+`checked` usage after the first render. Stripped in production builds.
+
+### Switch
+
+```tsx
+import { Switch } from 'anvil-native';
+import { View } from 'react-native';
+
+function NotificationsSwitch() {
+  return (
+    <Switch.Root>
+      {({ checked }) => (
+        <View style={{ width: 44, height: 26, borderRadius: 13, backgroundColor: checked ? 'black' : '#ccc' }}>
+          <Switch.Thumb
+            style={{
+              width: 22,
+              height: 22,
+              borderRadius: 11,
+              backgroundColor: 'white',
+              alignSelf: checked ? 'flex-end' : 'flex-start',
+            }}
+          />
+        </View>
+      )}
+    </Switch.Root>
+  );
+}
+```
+
+`Switch` is `Checkbox`'s boolean-only sibling: same shape (`Switch.Root` is
+the pressable itself, `accessibilityRole="switch"`), but `checked` is always
+`boolean` — no `'indeterminate'`, since a physical on/off switch has no
+third state. Unlike `Checkbox.Indicator`, `Switch.Thumb` always renders (in
+both states) since a switch's thumb *moves* rather than appearing/
+disappearing — read `checked` off `Switch.Root`'s render-prop (as shown
+above) or off `Switch.Thumb`'s own render-prop to position/color it
+yourself.
+
+Supports controlled (`checked`/`onCheckedChange`) and uncontrolled
+(`defaultChecked`) usage, `disabled`, and an imperative ref (`SwitchHandle`
+— `toggle`/`setChecked`/`getChecked`).
+
+**Dev-mode checks.** In development, `Switch.Root` warns (via
+`console.error`, once) if you switch between controlled and uncontrolled
+`checked` usage after the first render. Stripped in production builds.
+
+### RadioGroup
+
+```tsx
+import { RadioGroup } from 'anvil-native';
+import { Text, View } from 'react-native';
+
+const SHIPPING_OPTIONS = [
+  { value: 'standard', label: 'Standard' },
+  { value: 'express', label: 'Express' },
+];
+
+function ShippingPicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <RadioGroup.Root value={value} onValueChange={(next) => next && onChange(next)}>
+      {SHIPPING_OPTIONS.map((option) => (
+        <RadioGroup.Item key={option.value} value={option.value}>
+          <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 1 }}>
+            <RadioGroup.Indicator>
+              <View style={{ flex: 1, margin: 4, borderRadius: 6, backgroundColor: 'black' }} />
+            </RadioGroup.Indicator>
+          </View>
+          <Text>{option.label}</Text>
+        </RadioGroup.Item>
+      ))}
+    </RadioGroup.Root>
+  );
+}
+```
+
+`RadioGroup` is `ToggleGroup`'s `type="single"` counterpart with strict radio
+semantics baked in, instead of left to the consumer: `RadioGroup.Root` gets
+`accessibilityRole="radiogroup"`, each `RadioGroup.Item` gets
+`accessibilityRole="radio"`, and pressing an already-selected item is always
+a no-op — there's no `onValueChange(null)` to filter out, because the value
+can never be cleared from the UI. `RadioGroup.Indicator` works exactly like
+`Checkbox.Indicator`: it only renders while its `RadioGroup.Item` is
+selected (pass `forceMount` to keep it mounted for your own animation).
+
+Supports controlled (`value`/`onValueChange`) and uncontrolled
+(`defaultValue`) selection, `disabled` (on an item, or on the whole
+`RadioGroup.Root`), and an imperative ref (`RadioGroupHandle` —
+`select`/`getValue`, plus `clear()` for the programmatic-only case of
+resetting the selection, e.g. a "reset form" button).
+
+**Dev-mode checks.** In development, `RadioGroup.Root` warns if you switch
+between controlled and uncontrolled `value` usage after the first render, or
+if two sibling `RadioGroup.Item`s share the same `value`.
 
 ## Contributing
 
