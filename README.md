@@ -59,8 +59,11 @@ Native.
 | [`Switch`](#switch) | A boolean on/off control |
 | [`RadioGroup`](#radiogroup) | Exactly one selection among several options |
 | [`Slider`](#slider) | Drag (or single- or multi-thumb range) to pick a numeric value |
+| [`Toggle`](#toggle) | A single pressed/not-pressed button |
 | [`Progress`](#progress) | A determinate or indeterminate progress indicator |
 | [`Toast`](#toast) | A non-blocking, auto-dismissing notification |
+| [`VisuallyHidden`](#visuallyhidden) | Content hidden visually but readable by screen readers |
+| [`PinInput`](#pininput) | A verification-code input backed by one real, hidden `TextInput` |
 
 ## Installation
 
@@ -276,6 +279,9 @@ function Example() {
 `console.error`, once) if you switch between controlled and uncontrolled
 usage after the first render, if `type` changes after mount, or if two
 `ToggleGroup.Item`s share the same `value`. Stripped in production builds.
+
+If you just need one standalone pressed/not-pressed button — not a group —
+that's `Toggle` (below), not `ToggleGroup`.
 
 ### Popover
 
@@ -975,6 +981,130 @@ like "Undo" that need to do work before the toast disappears).
 
 **Dev-mode checks.** Same controlled/uncontrolled `open` warning as the
 other overlay primitives.
+
+### Toggle
+
+```tsx
+import { Toggle } from 'anvil-native';
+import { Text } from 'react-native';
+
+function BoldButton({
+  pressed,
+  onPressedChange,
+}: {
+  pressed: boolean;
+  onPressedChange: (pressed: boolean) => void;
+}) {
+  return (
+    <Toggle.Root pressed={pressed} onPressedChange={onPressedChange}>
+      {({ pressed: isPressed }) => (
+        <Text style={{ fontWeight: 'bold', opacity: isPressed ? 1 : 0.5 }}>B</Text>
+      )}
+    </Toggle.Root>
+  );
+}
+```
+
+A single pressed/not-pressed button — the one-off counterpart to
+`ToggleGroup` (which manages a *set* of options). `Toggle.Root` gets
+`accessibilityRole="togglebutton"` with `accessibilityState.selected`
+tracking `pressed` (React Native's `accessibilityState` has no dedicated
+"pressed" field; `selected` is the closest native-role match, the same
+choice other RN UI libraries make for this role).
+
+Supports controlled (`pressed`/`onPressedChange`) and uncontrolled
+(`defaultPressed`) usage, `disabled`, and an imperative ref (`ToggleHandle`
+— `toggle`/`setPressed`/`getPressed`).
+
+**Dev-mode checks.** Same controlled/uncontrolled warning (on `pressed`) as
+`Checkbox`/`Switch`.
+
+### VisuallyHidden
+
+```tsx
+import { VisuallyHidden } from 'anvil-native';
+import { Pressable, Text } from 'react-native';
+
+function CloseIconButton({ onPress }: { onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress}>
+      <Text>✕</Text>
+      <VisuallyHidden>
+        <Text>Close</Text>
+      </VisuallyHidden>
+    </Pressable>
+  );
+}
+```
+
+Renders `children` off-screen and zero-size instead of not rendering them
+at all — unlike conditionally omitting them, assistive technology still
+reads them. The canonical use case: an icon-only button that needs a real
+text label for screen reader users, without that label showing up next to
+the icon visually.
+
+### PinInput
+
+```tsx
+import { PinInput } from 'anvil-native';
+import { Text, View } from 'react-native';
+
+function VerificationCode({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <PinInput.Root
+      value={value}
+      onValueChange={onChange}
+      length={6}
+      accessibilityLabel="Verification code"
+      style={{ flexDirection: 'row', gap: 8 }}
+    >
+      {[0, 1, 2, 3, 4, 5].map((index) => (
+        <PinInput.Slot key={index} index={index}>
+          {({ char, active }) => (
+            <View style={{ width: 40, height: 48, borderWidth: 1, borderColor: active ? 'black' : '#ccc' }}>
+              <Text>{char ?? ''}</Text>
+            </View>
+          )}
+        </PinInput.Slot>
+      ))}
+    </PinInput.Root>
+  );
+}
+```
+
+A verification-code input (SMS, 2FA) that looks like `length` separate
+boxes but is actually backed by a single, real (visually hidden)
+`TextInput` — the standard, robust way to build this: one focusable field
+handles the keyboard, cursor, and paste/autofill correctly, while
+`PinInput.Slot`s are purely decorative (hidden from accessibility; the
+`TextInput` is what screen readers interact with, via the `accessibilityLabel`
+you pass to `PinInput.Root`) and just render whichever character lands at
+their `index`, plus whether they're `active` (the slot that would receive
+the *next* typed character). Tapping a `Slot` focuses the real input.
+
+The hidden `TextInput` sets `textContentType="oneTimeCode"` (iOS) and
+`autoComplete="sms-otp"` (Android, when `type="numeric"`, the default) so
+the OS's native "autofill code from SMS" suggestion works correctly — a
+real, easy-to-get-wrong detail this primitive gets right for you.
+`type="numeric"` (the default) also filters out non-digit input; pass
+`type="text"` to allow anything. Input is always truncated to `length`.
+`onComplete` fires once, exactly when the value transitions to `length`
+characters — handy for auto-submitting.
+
+Supports controlled (`value`/`onValueChange`) and uncontrolled
+(`defaultValue`) usage, `disabled`, and an imperative ref (`PinInputHandle`
+— `focus`/`blur`/`clear`/`getValue`/`setValue`).
+
+**Dev-mode checks.** In development, warns if you switch between controlled
+and uncontrolled usage, if `length` isn't greater than 0, if a `Slot`'s
+`index` is out of range for `length`, or if two `Slot`s share the same
+`index`.
 
 ## Contributing
 

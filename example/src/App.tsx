@@ -10,6 +10,7 @@ import {
   Dialog,
   Label,
   Menu,
+  PinInput,
   Popover,
   Progress,
   RadioGroup,
@@ -18,8 +19,10 @@ import {
   Slider,
   Switch,
   Tabs,
+  Toggle,
   ToggleGroup,
   Toast,
+  VisuallyHidden,
   type CheckboxHandle,
   type ToastHandle,
 } from 'anvil-native';
@@ -86,6 +89,8 @@ export default function App() {
   const [priceRange, setPriceRange] = useState([20, 70]);
   const termsCheckboxRef = useRef<CheckboxHandle>(null);
   const toastRef = useRef<ToastHandle>(null);
+  const [bold, setBold] = useState(false);
+  const [pin, setPin] = useState('');
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -649,6 +654,76 @@ export default function App() {
           </ContextMenu.Root>
 
           <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de Toggle
+          </Text>
+
+          <Toggle.Root
+            pressed={bold}
+            onPressedChange={setBold}
+            style={styles.toggleButton}
+          >
+            {({ pressed }) => (
+              <View
+                style={[
+                  styles.toggleInner,
+                  pressed && styles.toggleInnerActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.toggleLabel,
+                    pressed && styles.toggleLabelActive,
+                  ]}
+                >
+                  B
+                </Text>
+              </View>
+            )}
+          </Toggle.Root>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de VisuallyHidden
+          </Text>
+
+          <View style={styles.contextMenuCard}>
+            <Text
+              style={styles.checkboxLabel}
+              accessibilityRole="button"
+              onPress={() => {}}
+            >
+              ♥
+            </Text>
+            <VisuallyHidden>
+              <Text>Agregar a favoritos</Text>
+            </VisuallyHidden>
+          </View>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de PinInput
+          </Text>
+
+          <Text style={styles.checkboxLabel}>Código: {pin || '(vacío)'}</Text>
+          <PinInput.Root
+            value={pin}
+            onValueChange={setPin}
+            length={4}
+            accessibilityLabel="Código de verificación"
+            style={styles.pinInputRow}
+          >
+            {[0, 1, 2, 3].map((index) => (
+              <PinInput.Slot key={index} index={index}>
+                {({ char, active }) => (
+                  <View
+                    style={[styles.pinSlot, active && styles.pinSlotActive]}
+                  >
+                    <Text style={styles.pinSlotText}>{char ?? ''}</Text>
+                  </View>
+                )}
+              </PinInput.Slot>
+            ))}
+          </PinInput.Root>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
             Anvil — demo de Toast
           </Text>
 
@@ -1111,5 +1186,50 @@ const styles = StyleSheet.create({
   toastDescription: {
     color: '#ddd',
     marginTop: 4,
+  },
+  toggleButton: {
+    alignSelf: 'flex-start',
+  },
+  toggleInner: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#ccc',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toggleInnerActive: {
+    backgroundColor: '#111',
+    borderColor: '#111',
+  },
+  toggleLabel: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111',
+  },
+  toggleLabelActive: {
+    color: '#fff',
+  },
+  pinInputRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  pinSlot: {
+    width: 44,
+    height: 52,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: '#ccc',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pinSlotActive: {
+    borderColor: '#111',
+  },
+  pinSlotText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#111',
   },
 });

@@ -17,3 +17,6 @@ export * from './primitives/AspectRatio';
 export * from './primitives/Label';
 export * from './primitives/ContextMenu';
 export * from './primitives/Toast';
+export * from './primitives/VisuallyHidden';
+export * from './primitives/Toggle';
+export * from './primitives/PinInput';
