@@ -10,3 +10,7 @@ export * from './primitives/Switch';
 export * from './primitives/RadioGroup';
 export * from './primitives/AlertDialog';
 export * from './primitives/Progress';
+export * from './primitives/Slider';
+export * from './primitives/Separator';
+export * from './primitives/Collapsible';
+export * from './primitives/AspectRatio';

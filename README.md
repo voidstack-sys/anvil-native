@@ -649,6 +649,133 @@ announce it correctly with no extra work.
 `console.error`, once) if `value` falls outside the `0..max` range, or if
 `max` isn't greater than 0.
 
+### Slider
+
+```tsx
+import { Slider } from 'anvil-native';
+
+function Volume({ value, onChange }: { value: number; onChange: (value: number) => void }) {
+  return (
+    <Slider.Root value={[value]} onValueChange={([next]) => onChange(next)}>
+      <Slider.Track style={{ height: 4, borderRadius: 2, backgroundColor: '#eee' }}>
+        <Slider.Range style={{ height: 4, borderRadius: 2, backgroundColor: 'black' }} />
+        <Slider.Thumb
+          style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: 'white', borderWidth: 1 }}
+        />
+      </Slider.Track>
+    </Slider.Root>
+  );
+}
+```
+
+`Slider` uses `PanResponder` (built into React Native, no extra native
+dependency) rather than a gesture library, so dragging a `Slider.Thumb`
+works out of the box. `value` is an array — one entry per thumb — so a
+plain slider is `[value]` and a range slider is `[low, high]`:
+
+```tsx
+<Slider.Root value={[20, 70]} onValueChange={setRange} min={0} max={100}>
+  <Slider.Track>
+    <Slider.Range />
+    <Slider.Thumb index={0} />
+    <Slider.Thumb index={1} />
+  </Slider.Track>
+</Slider.Root>
+```
+
+Each `Slider.Thumb` takes an explicit `index` into `value` (defaulting to
+`0`, the common single-thumb case) rather than inferring it from render
+order — more verbose than some slider APIs, but it can't silently break if
+a thumb is ever conditionally rendered. Multi-thumb values are always
+clamped against their neighbors, so thumbs can never cross each other,
+whether you're dragging or setting `value` programmatically.
+
+`Slider.Track` measures its own width (via `onLayout`) to convert drag
+pixels into a value delta; `Slider.Thumb` positions itself along the track
+based on `value`/`min`/`max` and its own measured width, so it's centered
+correctly without you doing any math. `Slider.Range` is the optional filled
+portion between the track's start and the value (or between two thumbs, for
+a range).
+
+`Slider.Thumb` also gets `accessibilityRole="adjustable"` with a proper
+`accessibilityValue`, and responds to the increment/decrement accessibility
+actions VoiceOver/TalkBack expose for that role — so it's fully operable by
+screen reader users via swipe-up/down, not just by dragging.
+
+Supports controlled (`value`/`onValueChange`) and uncontrolled
+(`defaultValue`), `min`/`max`/`step`, `disabled`, `onValueCommit` (fires
+once when a drag or accessibility adjustment ends — handy for expensive
+side effects you don't want firing on every intermediate move), and an
+imperative ref (`SliderHandle` — `getValue`/`setValue`).
+
+Scope note: horizontal only for now (vertical sliders are uncommon on
+touch-first mobile UIs); tapping the track to jump the thumb straight to
+that position isn't implemented, only dragging the thumb itself.
+
+**Dev-mode checks.** In development, `Slider.Root` warns if you switch
+between controlled and uncontrolled `value` usage after the first render,
+if `min >= max`, if `step` isn't greater than 0, or if the initial
+`value`/`defaultValue` entries aren't in ascending order.
+
+### Separator
+
+```tsx
+import { Separator } from 'anvil-native';
+
+<Separator style={{ height: 1, backgroundColor: '#ccc' }} />
+```
+
+The simplest primitive in Anvil: a `View` that's hidden from assistive
+technology by default (`decorative`, since most separators are purely
+visual dividers between sections). Pass `decorative={false}` if this one
+actually carries meaning that should be announced.
+
+### Collapsible
+
+```tsx
+import { Collapsible } from 'anvil-native';
+import { Text } from 'react-native';
+
+function ShowMore() {
+  return (
+    <Collapsible.Root>
+      <Collapsible.Trigger>
+        {({ open }) => <Text>{open ? 'Show less' : 'Show more'}</Text>}
+      </Collapsible.Trigger>
+      <Collapsible.Content>
+        <Text>The extra detail that was hidden.</Text>
+      </Collapsible.Content>
+    </Collapsible.Root>
+  );
+}
+```
+
+A single expand/collapse panel that isn't part of a group — everything
+`Accordion.Item` gives you, without needing an `Accordion.Root` around it.
+Same controlled (`open`/`onOpenChange`) / uncontrolled (`defaultOpen`)
+support, `disabled`, `forceMount` on `Content`, imperative ref
+(`CollapsibleHandle`), and dev-mode controlled/uncontrolled warning as the
+other primitives.
+
+### AspectRatio
+
+```tsx
+import { AspectRatio } from 'anvil-native';
+import { Image } from 'react-native';
+
+<AspectRatio ratio={16 / 9}>
+  <Image source={{ uri: '...' }} style={{ flex: 1 }} />
+</AspectRatio>
+```
+
+A thin wrapper around React Native's own `aspectRatio` style — mostly worth
+using for the self-documenting API and the dev-mode check, since RN already
+supports `aspectRatio` natively (no padding-bottom-hack workaround needed,
+unlike the CSS story `AspectRatio` originally solved on the web).
+
+**Dev-mode checks.** Warns (via `console.error`, once) if `ratio` isn't
+greater than 0.
+
 ## Contributing
 
 - [Development workflow](CONTRIBUTING.md#development-workflow)

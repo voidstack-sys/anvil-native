@@ -3,13 +3,17 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   Accordion,
   AlertDialog,
+  AspectRatio,
   Checkbox,
+  Collapsible,
   Dialog,
   Menu,
   Popover,
   Progress,
   RadioGroup,
   Select,
+  Separator,
+  Slider,
   Switch,
   Tabs,
   ToggleGroup,
@@ -73,6 +77,8 @@ export default function App() {
   const [notifications, setNotifications] = useState(true);
   const [shipping, setShipping] = useState('standard');
   const [downloadProgress, setDownloadProgress] = useState(0);
+  const [volume, setVolume] = useState([40]);
+  const [priceRange, setPriceRange] = useState([20, 70]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -485,6 +491,70 @@ export default function App() {
       <Progress.Root value={null} style={styles.progressTrack}>
         <Progress.Indicator style={styles.progressIndeterminateFill} />
       </Progress.Root>
+
+      <Text style={[styles.title, styles.sectionSpacing]}>
+        Anvil — demo de Slider
+      </Text>
+
+      <Text style={styles.progressLabel}>Volumen: {volume[0]}</Text>
+      <Slider.Root
+        value={volume}
+        onValueChange={setVolume}
+        style={styles.sliderRoot}
+      >
+        <Slider.Track style={styles.sliderTrack}>
+          <Slider.Range style={styles.sliderRange} />
+          <Slider.Thumb style={styles.sliderThumb} />
+        </Slider.Track>
+      </Slider.Root>
+
+      <Text style={[styles.progressLabel, styles.sectionSpacing]}>
+        Precio: ${priceRange[0]} - ${priceRange[1]}
+      </Text>
+      <Slider.Root
+        value={priceRange}
+        onValueChange={setPriceRange}
+        min={0}
+        max={100}
+        style={styles.sliderRoot}
+      >
+        <Slider.Track style={styles.sliderTrack}>
+          <Slider.Range style={styles.sliderRange} />
+          <Slider.Thumb index={0} style={styles.sliderThumb} />
+          <Slider.Thumb index={1} style={styles.sliderThumb} />
+        </Slider.Track>
+      </Slider.Root>
+
+      <Text style={[styles.title, styles.sectionSpacing]}>
+        Anvil — demo de Separator y Collapsible
+      </Text>
+
+      <Text style={styles.checkboxLabel}>Sección uno</Text>
+      <Separator style={styles.separator} />
+
+      <Collapsible.Root style={styles.collapsibleRoot}>
+        <Collapsible.Trigger style={styles.dialogCancelButton}>
+          {({ open }) => (
+            <Text style={styles.selectTriggerLabel}>
+              {open ? 'Ocultar detalles ▲' : 'Mostrar detalles ▼'}
+            </Text>
+          )}
+        </Collapsible.Trigger>
+        <Collapsible.Content>
+          <Text style={styles.answer}>
+            Este panel es un Collapsible independiente — no forma parte de
+            ningún Accordion, útil para un solo "mostrar más" suelto.
+          </Text>
+        </Collapsible.Content>
+      </Collapsible.Root>
+
+      <Text style={[styles.title, styles.sectionSpacing]}>
+        Anvil — demo de AspectRatio
+      </Text>
+
+      <AspectRatio ratio={16 / 9} style={styles.aspectRatioBox}>
+        <Text style={styles.aspectRatioLabel}>16:9</Text>
+      </AspectRatio>
     </ScrollView>
   );
 }
@@ -851,5 +921,47 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#111',
     borderRadius: 4,
+  },
+  sliderRoot: {
+    paddingVertical: 12,
+  },
+  sliderTrack: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#eee',
+  },
+  sliderRange: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#111',
+  },
+  sliderThumb: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: '#111',
+    marginTop: -9,
+  },
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: '#ccc',
+    marginVertical: 12,
+  },
+  collapsibleRoot: {
+    alignItems: 'flex-start',
+  },
+  aspectRatioBox: {
+    width: '100%',
+    backgroundColor: '#eee',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  aspectRatioLabel: {
+    color: '#666',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
