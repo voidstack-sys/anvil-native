@@ -1,5 +1,11 @@
 # anvil-native
 
+[![npm version](https://img.shields.io/npm/v/anvil-native.svg)](https://www.npmjs.com/package/anvil-native)
+[![npm downloads](https://img.shields.io/npm/dm/anvil-native.svg)](https://www.npmjs.com/package/anvil-native)
+[![CI](https://github.com/voidstack-sys/anvil-native/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/voidstack-sys/anvil-native/actions/workflows/ci.yml)
+[![types](https://img.shields.io/npm/types/anvil-native.svg)](./src/index.tsx)
+[![license](https://img.shields.io/npm/l/anvil-native.svg)](./LICENSE)
+
 Headless, accessible UI primitives for React Native.
 
 Anvil gives you the hard parts of building interactive components — state
@@ -8,11 +14,64 @@ without imposing any visual style. You bring the `style`, Anvil brings the
 behavior. Think of it as [Radix UI](https://www.radix-ui.com/) for React
 Native.
 
+## Features
+
+- **Headless** — no rendered styles, no theme to fight. Every primitive
+  accepts your `style` and exposes its state (`open`, `selected`,
+  `expanded`, ...) via render-props so you decide what it looks like.
+- **Accessible by default** — the correct `accessibilityRole` and
+  `accessibilityState`/`accessibilityValue` are wired up for you on every
+  primitive, including screen-reader-operable actions on `Slider` and
+  proper focus-visible-equivalent modal semantics on overlays.
+- **No extra native dependencies** — overlays use React Native's own
+  `Modal`, `Slider` uses `PanResponder`. Nothing to link, no config plugins,
+  works in a plain Expo managed app.
+- **TypeScript-first** — every prop, render-prop, and imperative ref is
+  fully typed; `.d.ts` files ship in the package.
+- **Hardened for real usage** — root-level `disabled`, imperative refs
+  (`open()`/`toggle()`/`getValue()`/...), and dev-mode-only
+  `console.error` warnings that catch common mistakes (mismatched
+  controlled/uncontrolled usage, duplicate item values, out-of-range
+  values) before they ship — all stripped from production builds.
+- **Touch-first, deliberately** — built for phone/tablet touchscreens.
+  Keyboard and D-pad navigation are explicitly out of scope; see each
+  primitive's accessibility notes for what *is* covered for screen reader
+  users.
+
+## Primitives
+
+| Primitive | What it's for |
+| --- | --- |
+| [`Accordion`](#accordion) | Expand/collapse one or many labeled sections |
+| [`Tabs`](#tabs) | Switch between panels sharing the same space |
+| [`ToggleGroup`](#togglegroup) | A row of options, single- or multi-select |
+| [`Collapsible`](#collapsible) | One standalone expand/collapse panel |
+| [`Separator`](#separator) | A decorative (or semantic) dividing line |
+| [`AspectRatio`](#aspectratio) | Constrain a child to a fixed width/height ratio |
+| [`Popover`](#popover) | Floating, anchored content triggered by a press |
+| [`Dialog`](#dialog) | A centered, blocking modal |
+| [`AlertDialog`](#alertdialog) | A `Dialog` that can't be dismissed by accident, for destructive confirmations |
+| [`Menu`](#menu) | A floating list of one-shot actions |
+| [`Select`](#select) | A floating list of choosable, stateful options |
+| [`Checkbox`](#checkbox) | A boolean (or indeterminate) toggle |
+| [`Switch`](#switch) | A boolean on/off control |
+| [`RadioGroup`](#radiogroup) | Exactly one selection among several options |
+| [`Slider`](#slider) | Drag (or single- or multi-thumb range) to pick a numeric value |
+| [`Progress`](#progress) | A determinate or indeterminate progress indicator |
+
 ## Installation
 
 ```sh
 npm install anvil-native
 ```
+
+## Requirements
+
+- React 18 or newer (`Dialog`/`AlertDialog` use the `useId` hook).
+- Any recent React Native version — Anvil only uses stable, built-in APIs
+  (`Modal`, `PanResponder`, `Pressable`, the `aspectRatio` style).
+- Works in Expo (managed workflow) out of the box — no native code, no
+  config plugins, nothing to prebuild for.
 
 ## Usage
 
