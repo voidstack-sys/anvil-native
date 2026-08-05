@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   Accordion,
+  AlertDialog,
   Checkbox,
   Dialog,
   Menu,
   Popover,
+  Progress,
   RadioGroup,
   Select,
   Switch,
@@ -70,6 +72,14 @@ export default function App() {
     checkedCount === 0 ? false : allChecked ? true : 'indeterminate';
   const [notifications, setNotifications] = useState(true);
   const [shipping, setShipping] = useState('standard');
+  const [downloadProgress, setDownloadProgress] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDownloadProgress((prev) => (prev >= 100 ? 0 : prev + 10));
+    }, 600);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -420,6 +430,61 @@ export default function App() {
           </RadioGroup.Item>
         ))}
       </RadioGroup.Root>
+
+      <Text style={[styles.title, styles.sectionSpacing]}>
+        Anvil — demo de AlertDialog
+      </Text>
+
+      <AlertDialog.Root>
+        <AlertDialog.Trigger style={styles.dialogTriggerButton}>
+          <Text style={styles.dialogTriggerLabel}>Eliminar cuenta</Text>
+        </AlertDialog.Trigger>
+        <AlertDialog.Content>
+          <AlertDialog.Overlay style={styles.dialogOverlay} />
+          <View style={styles.dialogCenterWrapper} pointerEvents="box-none">
+            <View style={styles.dialogPanel}>
+              <AlertDialog.Title style={styles.dialogTitle}>
+                ¿Eliminar tu cuenta?
+              </AlertDialog.Title>
+              <AlertDialog.Description style={styles.dialogDescription}>
+                Esta acción es permanente. A diferencia del Dialog de arriba,
+                tocar afuera o el botón atrás de Android no la cierra — solo
+                Cancelar o Eliminar.
+              </AlertDialog.Description>
+              <View style={styles.dialogActions}>
+                <AlertDialog.Cancel style={styles.dialogCancelButton}>
+                  <Text style={styles.dialogCancelLabel}>Cancelar</Text>
+                </AlertDialog.Cancel>
+                <AlertDialog.Action style={styles.dialogConfirmButton}>
+                  <Text style={styles.dialogConfirmLabel}>Eliminar</Text>
+                </AlertDialog.Action>
+              </View>
+            </View>
+          </View>
+        </AlertDialog.Content>
+      </AlertDialog.Root>
+
+      <Text style={[styles.title, styles.sectionSpacing]}>
+        Anvil — demo de Progress
+      </Text>
+
+      <Text style={styles.progressLabel}>
+        Descargando... {downloadProgress}%
+      </Text>
+      <Progress.Root value={downloadProgress} style={styles.progressTrack}>
+        <Progress.Indicator style={styles.progressFillWrapper}>
+          {({ percentage }) => (
+            <View style={[styles.progressFill, { width: `${percentage}%` }]} />
+          )}
+        </Progress.Indicator>
+      </Progress.Root>
+
+      <Text style={[styles.progressLabel, styles.sectionSpacing]}>
+        Sincronizando (indeterminado)
+      </Text>
+      <Progress.Root value={null} style={styles.progressTrack}>
+        <Progress.Indicator style={styles.progressIndeterminateFill} />
+      </Progress.Root>
     </ScrollView>
   );
 }
@@ -761,5 +826,30 @@ const styles = StyleSheet.create({
   },
   radioLabelSelected: {
     fontWeight: '600',
+  },
+  progressLabel: {
+    fontSize: 14,
+    color: '#444',
+    marginBottom: 8,
+  },
+  progressTrack: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#eee',
+    overflow: 'hidden',
+  },
+  progressFillWrapper: {
+    flex: 1,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#111',
+    borderRadius: 4,
+  },
+  progressIndeterminateFill: {
+    width: '40%',
+    height: '100%',
+    backgroundColor: '#111',
+    borderRadius: 4,
   },
 });

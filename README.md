@@ -322,6 +322,10 @@ Supports the same controlled (`open`/`onOpenChange`) / uncontrolled
 `close`/`toggle`/`isOpen`), and dev-mode controlled/uncontrolled warning as
 `Popover`.
 
+For destructive confirmations ("delete this?") where dismissing by accident
+would be a real problem, reach for `AlertDialog` (below) instead — same
+shape, safer defaults.
+
 ### Menu
 
 ```tsx
@@ -556,6 +560,94 @@ resetting the selection, e.g. a "reset form" button).
 **Dev-mode checks.** In development, `RadioGroup.Root` warns if you switch
 between controlled and uncontrolled `value` usage after the first render, or
 if two sibling `RadioGroup.Item`s share the same `value`.
+
+### AlertDialog
+
+```tsx
+import { AlertDialog } from 'anvil-native';
+import { Text, View } from 'react-native';
+
+function DeleteAccountAlert() {
+  return (
+    <AlertDialog.Root>
+      <AlertDialog.Trigger>
+        <Text>Delete account</Text>
+      </AlertDialog.Trigger>
+      <AlertDialog.Content>
+        <AlertDialog.Overlay style={{ backgroundColor: 'rgba(0,0,0,0.4)' }} />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} pointerEvents="box-none">
+          <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 16 }}>
+            <AlertDialog.Title>Delete your account?</AlertDialog.Title>
+            <AlertDialog.Description>This is permanent.</AlertDialog.Description>
+            <AlertDialog.Cancel>
+              <Text>Cancel</Text>
+            </AlertDialog.Cancel>
+            <AlertDialog.Action onPress={() => deleteAccount()}>
+              <Text>Delete</Text>
+            </AlertDialog.Action>
+          </View>
+        </View>
+      </AlertDialog.Content>
+    </AlertDialog.Root>
+  );
+}
+```
+
+`AlertDialog` is `Dialog` with the defaults flipped for destructive
+confirmations: `AlertDialog.Overlay`'s `closeOnPress` defaults to `false`
+(vs. `true` on `Dialog.Overlay`), and `AlertDialog.Content`'s
+`closeOnRequestClose` (the Android hardware back button) also defaults to
+`false` — so it can't be dismissed by an accidental tap outside or a back
+press, only by an explicit `Cancel` or `Action`. Everything else about
+layout and structure (you build the panel yourself inside `Content`, same
+`Title`/`Description` accessibility linking) matches `Dialog` exactly.
+
+`AlertDialog.Cancel` and `AlertDialog.Action` both close the dialog by
+default when pressed — `Action` additionally accepts `closeOnPress={false}`
+for confirm actions that do async work (e.g. an API call) and need to stay
+open, perhaps with a loading state, until you close it yourself via an
+imperative `AlertDialogHandle.close()`.
+
+Supports the same controlled (`open`/`onOpenChange`) / uncontrolled
+(`defaultOpen`), `disabled`, imperative ref (`AlertDialogHandle`), and
+dev-mode controlled/uncontrolled warning as `Dialog`.
+
+### Progress
+
+```tsx
+import { Progress } from 'anvil-native';
+import { View } from 'react-native';
+
+function DownloadProgress({ percent }: { percent: number }) {
+  return (
+    <Progress.Root value={percent} style={{ height: 8, borderRadius: 4, backgroundColor: '#eee' }}>
+      <Progress.Indicator style={{ flex: 1 }}>
+        {({ percentage }) => (
+          <View style={{ height: '100%', width: `${percentage}%`, backgroundColor: 'black' }} />
+        )}
+      </Progress.Indicator>
+    </Progress.Root>
+  );
+}
+```
+
+`Progress` is display-only — there's no internal state, no `Trigger`, no
+imperative ref: `value` is a number you own and pass in directly (or `null`
+for an indeterminate progress bar with an unknown duration, e.g. while
+syncing). `Progress.Root` computes `percentage` (`value` expressed as
+0-100, clamped, or `null` while indeterminate) and hands it to both its own
+render-prop and `Progress.Indicator`'s, so you can size the filled portion
+yourself — Anvil doesn't render or animate anything for you.
+
+`Progress.Root` gets `accessibilityRole="progressbar"` with a proper
+`accessibilityValue` (`min`/`max`/`now`, plus a `text` — defaulting to a
+rounded percentage, override via `getValueLabel`) and
+`accessibilityState={{ busy: true }}` while indeterminate, so screen readers
+announce it correctly with no extra work.
+
+**Dev-mode checks.** In development, `Progress.Root` warns (via
+`console.error`, once) if `value` falls outside the `0..max` range, or if
+`max` isn't greater than 0.
 
 ## Contributing
 

@@ -8,3 +8,5 @@ export * from './primitives/Select';
 export * from './primitives/Checkbox';
 export * from './primitives/Switch';
 export * from './primitives/RadioGroup';
+export * from './primitives/AlertDialog';
+export * from './primitives/Progress';
