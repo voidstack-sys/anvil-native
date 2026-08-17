@@ -64,6 +64,8 @@ Native.
 | [`Toast`](#toast) | A non-blocking, auto-dismissing notification |
 | [`VisuallyHidden`](#visuallyhidden) | Content hidden visually but readable by screen readers |
 | [`PinInput`](#pininput) | A verification-code input backed by one real, hidden `TextInput` |
+| [`Tooltip`](#tooltip) | A floating hint triggered by long-press, hover, or focus |
+| [`Avatar`](#avatar) | A profile image with an automatic loading/error fallback |
 
 ## Installation
 
@@ -1105,6 +1107,81 @@ Supports controlled (`value`/`onValueChange`) and uncontrolled
 and uncontrolled usage, if `length` isn't greater than 0, if a `Slot`'s
 `index` is out of range for `length`, or if two `Slot`s share the same
 `index`.
+
+### Tooltip
+
+```tsx
+import { Tooltip } from 'anvil-native';
+import { Text } from 'react-native';
+
+function InfoButton() {
+  return (
+    <Tooltip.Root>
+      <Tooltip.Trigger>
+        <Text>ⓘ</Text>
+      </Tooltip.Trigger>
+      <Tooltip.Content>
+        <Text style={{ color: 'white' }}>This field is required</Text>
+      </Tooltip.Content>
+    </Tooltip.Root>
+  );
+}
+```
+
+A floating hint anchored to its trigger, positioned with the same
+flip-to-fit engine as `Popover`/`Menu`/`Select`. Since touch has no
+"hover", `Tooltip.Trigger` opens on **long-press** (mirroring how Android's
+own tooltips work — lifting the finger closes it again), and additionally
+on **mouse hover** and **keyboard focus** for desktop/web, where those
+interactions exist. Focus support matters even on a phone: it's how a
+connected keyboard or a screen reader's exploration model reaches content
+that a touch user would otherwise have to hold down to see.
+
+`Tooltip.Content` is deliberately non-modal — no backdrop, no dismiss on
+outside press — and defaults `pointerEvents="none"` so it never intercepts
+touches meant for whatever's underneath it. String children are wrapped in
+a `Text` for you (`<Tooltip.Content>Save changes</Tooltip.Content>` just
+works); pass an explicit `Text` child yourself for full style control.
+
+Supports controlled (`open`/`onOpenChange`) and uncontrolled (`defaultOpen`)
+usage, `disabled`, `delayDuration` (hover-open delay in ms, default 700 —
+long-press and focus always open immediately), and an imperative ref
+(`TooltipHandle` — `open`/`close`/`isOpen`).
+
+**Dev-mode checks.** Same controlled/uncontrolled warning as the other
+overlay primitives.
+
+### Avatar
+
+```tsx
+import { Avatar } from 'anvil-native';
+import { StyleSheet, Text } from 'react-native';
+
+function ProfilePicture({ uri, initials }: { uri: string; initials: string }) {
+  return (
+    <Avatar.Root style={{ width: 48, height: 48, borderRadius: 24, overflow: 'hidden' }}>
+      <Avatar.Image source={{ uri }} />
+      <Avatar.Fallback delayMs={300} style={{ ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' }}>
+        <Text>{initials}</Text>
+      </Avatar.Fallback>
+    </Avatar.Root>
+  );
+}
+```
+
+A profile image that handles its own loading/error states. `Avatar.Image`
+tracks a real Image's `onLoad`/`onError` and unmounts itself on error, so
+`Avatar.Fallback` (initials, an icon, whatever you render) is only visible
+while there's no successfully-loaded image to show — you never have to
+wire that logic up by hand, and you never see a broken-image icon.
+
+`Avatar.Fallback`'s optional `delayMs` holds off rendering the fallback for
+that many milliseconds, so a fast-loading image never flashes the fallback
+first. `Avatar.Image` re-attempts loading whenever its `source` prop
+changes identity — pass a stable reference (e.g. via `useMemo`) if you
+construct it inline, so you don't trigger reloads on every render.
+`onLoadingStatusChange` reports the raw `'idle' | 'loading' | 'loaded' |
+'error'` status if you need it for anything else.
 
 ## Contributing
 

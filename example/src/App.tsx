@@ -4,6 +4,7 @@ import {
   Accordion,
   AlertDialog,
   AspectRatio,
+  Avatar,
   Checkbox,
   Collapsible,
   ContextMenu,
@@ -22,6 +23,7 @@ import {
   Toggle,
   ToggleGroup,
   Toast,
+  Tooltip,
   VisuallyHidden,
   type CheckboxHandle,
   type ToastHandle,
@@ -724,6 +726,45 @@ export default function App() {
           </PinInput.Root>
 
           <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de Tooltip
+          </Text>
+
+          <View style={styles.popoverRow}>
+            <Tooltip.Root>
+              <Tooltip.Trigger style={styles.popoverTrigger}>
+                <Text style={styles.popoverTriggerLabel}>i</Text>
+              </Tooltip.Trigger>
+              <Tooltip.Content style={styles.tooltipContent}>
+                <Text style={styles.tooltipText}>
+                  Mantené presionado, pasá el mouse o enfocá con teclado
+                </Text>
+              </Tooltip.Content>
+            </Tooltip.Root>
+          </View>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de Avatar
+          </Text>
+
+          <View style={styles.avatarRow}>
+            <Avatar.Root style={styles.avatarRoot}>
+              <Avatar.Image
+                source={{ uri: 'https://i.pravatar.cc/150?img=12' }}
+              />
+              <Avatar.Fallback style={styles.avatarFallback}>
+                <Text style={styles.avatarFallbackText}>DC</Text>
+              </Avatar.Fallback>
+            </Avatar.Root>
+
+            <Avatar.Root style={styles.avatarRoot}>
+              <Avatar.Image source={{ uri: 'https://broken.invalid/x.png' }} />
+              <Avatar.Fallback style={styles.avatarFallback}>
+                <Text style={styles.avatarFallbackText}>MR</Text>
+              </Avatar.Fallback>
+            </Avatar.Root>
+          </View>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
             Anvil — demo de Toast
           </Text>
 
@@ -1231,5 +1272,36 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     color: '#111',
+  },
+  tooltipContent: {
+    maxWidth: 220,
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#111',
+  },
+  tooltipText: {
+    color: '#fff',
+    fontSize: 13,
+  },
+  avatarRow: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  avatarRoot: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    overflow: 'hidden',
+    backgroundColor: '#eee',
+  },
+  avatarFallback: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarFallbackText: {
+    fontWeight: '700',
+    color: '#666',
   },
 });

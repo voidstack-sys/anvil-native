@@ -20,3 +20,5 @@ export * from './primitives/Toast';
 export * from './primitives/VisuallyHidden';
 export * from './primitives/Toggle';
 export * from './primitives/PinInput';
+export * from './primitives/Tooltip';
+export * from './primitives/Avatar';
