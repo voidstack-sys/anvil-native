@@ -5,12 +5,14 @@ import {
   AlertDialog,
   AspectRatio,
   Avatar,
+  BottomSheet,
   Checkbox,
   Collapsible,
   ContextMenu,
   Dialog,
   Label,
   Menu,
+  PasswordToggleField,
   PinInput,
   Popover,
   Progress,
@@ -23,8 +25,10 @@ import {
   Toggle,
   ToggleGroup,
   Toast,
+  Toolbar,
   Tooltip,
   VisuallyHidden,
+  type BottomSheetHandle,
   type CheckboxHandle,
   type ToastHandle,
 } from 'anvil-native';
@@ -91,8 +95,10 @@ export default function App() {
   const [priceRange, setPriceRange] = useState([20, 70]);
   const termsCheckboxRef = useRef<CheckboxHandle>(null);
   const toastRef = useRef<ToastHandle>(null);
+  const bottomSheetRef = useRef<BottomSheetHandle>(null);
   const [bold, setBold] = useState(false);
   const [pin, setPin] = useState('');
+  const [passwordVisible, setPasswordVisible] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -765,6 +771,78 @@ export default function App() {
           </View>
 
           <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de PasswordToggleField
+          </Text>
+
+          <PasswordToggleField.Root
+            visible={passwordVisible}
+            onVisibleChange={setPasswordVisible}
+          >
+            <View style={styles.passwordRow}>
+              <PasswordToggleField.Input
+                style={styles.passwordInput}
+                placeholder="Contraseña"
+              />
+              <PasswordToggleField.Toggle style={styles.passwordToggleButton}>
+                <PasswordToggleField.Icon
+                  visible={
+                    <Text style={styles.passwordToggleLabel}>Ocultar</Text>
+                  }
+                  hidden={
+                    <Text style={styles.passwordToggleLabel}>Mostrar</Text>
+                  }
+                />
+              </PasswordToggleField.Toggle>
+            </View>
+          </PasswordToggleField.Root>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de Toolbar
+          </Text>
+
+          <Toolbar.Root style={styles.toolbarRow}>
+            <Toolbar.Button style={styles.toolbarButton}>
+              <Text style={styles.toolbarButtonLabel}>B</Text>
+            </Toolbar.Button>
+            <Toolbar.Button style={styles.toolbarButton}>
+              <Text style={styles.toolbarButtonLabel}>I</Text>
+            </Toolbar.Button>
+            <Toolbar.Button style={styles.toolbarButton}>
+              <Text style={styles.toolbarButtonLabel}>U</Text>
+            </Toolbar.Button>
+          </Toolbar.Root>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de BottomSheet
+          </Text>
+
+          <BottomSheet.Root ref={bottomSheetRef}>
+            <BottomSheet.Trigger style={styles.dialogTriggerButton}>
+              <Text style={styles.dialogTriggerLabel}>Abrir hoja</Text>
+            </BottomSheet.Trigger>
+            <BottomSheet.Content>
+              <BottomSheet.Overlay style={styles.dialogOverlay} />
+              <BottomSheet.Panel style={styles.bottomSheetPanel}>
+                <BottomSheet.Handle
+                  testID="bottom-sheet-handle"
+                  style={styles.bottomSheetHandleHitArea}
+                >
+                  <View style={styles.bottomSheetHandleBar} />
+                </BottomSheet.Handle>
+                <BottomSheet.Title style={styles.dialogTitle}>
+                  Filtros
+                </BottomSheet.Title>
+                <BottomSheet.Description style={styles.dialogDescription}>
+                  Arrastrá hacia abajo o tocá "Cerrar" para descartar.
+                </BottomSheet.Description>
+                <BottomSheet.Close style={styles.dialogCancelButton}>
+                  <Text style={styles.dialogCancelLabel}>Cerrar</Text>
+                </BottomSheet.Close>
+              </BottomSheet.Panel>
+            </BottomSheet.Content>
+          </BottomSheet.Root>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
             Anvil — demo de Toast
           </Text>
 
@@ -1303,5 +1381,64 @@ const styles = StyleSheet.create({
   avatarFallbackText: {
     fontWeight: '700',
     color: '#666',
+  },
+  passwordRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  passwordInput: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#ccc',
+    fontSize: 15,
+  },
+  passwordToggleButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  passwordToggleLabel: {
+    color: '#111',
+    fontWeight: '600',
+    fontSize: 13,
+  },
+  toolbarRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  toolbarButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#ccc',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toolbarButtonLabel: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111',
+  },
+  bottomSheetPanel: {
+    width: '100%',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 32,
+    backgroundColor: '#fff',
+  },
+  bottomSheetHandleHitArea: {
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  bottomSheetHandleBar: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#ccc',
   },
 });

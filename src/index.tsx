@@ -22,3 +22,6 @@ export * from './primitives/Toggle';
 export * from './primitives/PinInput';
 export * from './primitives/Tooltip';
 export * from './primitives/Avatar';
+export * from './primitives/PasswordToggleField';
+export * from './primitives/Toolbar';
+export * from './primitives/BottomSheet';

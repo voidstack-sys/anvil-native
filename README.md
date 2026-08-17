@@ -66,6 +66,9 @@ Native.
 | [`PinInput`](#pininput) | A verification-code input backed by one real, hidden `TextInput` |
 | [`Tooltip`](#tooltip) | A floating hint triggered by long-press, hover, or focus |
 | [`Avatar`](#avatar) | A profile image with an automatic loading/error fallback |
+| [`PasswordToggleField`](#passwordtogglefield) | A password input with a show/hide toggle |
+| [`Toolbar`](#toolbar) | An accessible, disable-as-a-group row of controls |
+| [`BottomSheet`](#bottomsheet) | A panel that slides up from the bottom, with swipe-to-dismiss |
 
 ## Installation
 
@@ -1182,6 +1185,127 @@ changes identity — pass a stable reference (e.g. via `useMemo`) if you
 construct it inline, so you don't trigger reloads on every render.
 `onLoadingStatusChange` reports the raw `'idle' | 'loading' | 'loaded' |
 'error'` status if you need it for anything else.
+
+### PasswordToggleField
+
+```tsx
+import { PasswordToggleField } from 'anvil-native';
+import { Text, View } from 'react-native';
+
+function PasswordInput() {
+  return (
+    <PasswordToggleField.Root>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <PasswordToggleField.Input style={{ flex: 1 }} placeholder="Password" />
+        <PasswordToggleField.Toggle>
+          <PasswordToggleField.Icon visible={<Text>🙈</Text>} hidden={<Text>👁️</Text>} />
+        </PasswordToggleField.Toggle>
+      </View>
+    </PasswordToggleField.Root>
+  );
+}
+```
+
+A password field with a show/hide toggle. `PasswordToggleField.Input` is a
+real `TextInput` with `secureTextEntry` wired to the field's `visible`
+state for you — pass every other `TextInput` prop straight through (value,
+onChangeText, autoComplete, whatever your form needs). `PasswordToggleField.Toggle`
+flips it, and defaults its `accessibilityLabel` to "Show password"/"Hide
+password" (override it if you localize). `PasswordToggleField.Icon` is a
+small convenience for picking between a `visible`/`hidden` icon based on
+the current state, so you don't have to read the context yourself.
+
+Supports controlled (`visible`/`onVisibleChange`) and uncontrolled
+(`defaultVisible`) usage, `disabled` (on `Root`, disabling the `Toggle`
+while leaving the `Input` itself untouched), and an imperative ref
+(`PasswordToggleFieldHandle` — `toggle`/`setVisible`/`getVisible`).
+
+**Dev-mode checks.** Same controlled/uncontrolled warning (on `visible`) as
+`Toggle`/`Checkbox`/`Switch`.
+
+### Toolbar
+
+```tsx
+import { Toolbar } from 'anvil-native';
+import { Text } from 'react-native';
+
+function FormattingToolbar() {
+  return (
+    <Toolbar.Root style={{ flexDirection: 'row', gap: 8 }}>
+      <Toolbar.Button onPress={() => {}}>
+        <Text style={{ fontWeight: 'bold' }}>B</Text>
+      </Toolbar.Button>
+      <Toolbar.Button onPress={() => {}}>
+        <Text style={{ fontStyle: 'italic' }}>I</Text>
+      </Toolbar.Button>
+    </Toolbar.Root>
+  );
+}
+```
+
+A row of related controls, grouped for assistive technology under
+`accessibilityRole="toolbar"`. `Toolbar.Root`'s `disabled` disables every
+`Toolbar.Button` inside it regardless of each button's own `disabled` —
+the same "group disables its items" convention `RadioGroup`/`ToggleGroup`
+use. Deliberately minimal: it doesn't reimplement toggling or grouping
+logic, so drop `Toggle`, `ToggleGroup`, or a plain `Separator` inside it
+for those cases instead of reaching for something toolbar-specific.
+
+### BottomSheet
+
+```tsx
+import { BottomSheet } from 'anvil-native';
+import { Text, View } from 'react-native';
+
+function FilterSheet() {
+  return (
+    <BottomSheet.Root>
+      <BottomSheet.Trigger>
+        <Text>Filters</Text>
+      </BottomSheet.Trigger>
+      <BottomSheet.Content>
+        <BottomSheet.Overlay style={{ backgroundColor: 'rgba(0,0,0,0.4)' }} />
+        <BottomSheet.Panel style={{ backgroundColor: 'white', borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
+          <BottomSheet.Handle style={{ alignItems: 'center', padding: 12 }}>
+            <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: '#ccc' }} />
+          </BottomSheet.Handle>
+          <BottomSheet.Title>Filters</BottomSheet.Title>
+          <BottomSheet.Close>
+            <Text>Close</Text>
+          </BottomSheet.Close>
+        </BottomSheet.Panel>
+      </BottomSheet.Content>
+    </BottomSheet.Root>
+  );
+}
+```
+
+A panel that slides up from the bottom edge — the most native-feeling
+modal pattern on both iOS and Android, and one Radix doesn't have (it's
+not a web pattern). `BottomSheet.Content` renders a `Modal` with
+`animationType="slide"`, so the initial open/close transition comes free
+from the platform; `BottomSheet.Handle` layers a swipe-to-dismiss gesture
+on top of that, exposing how far it's currently been dragged to
+`BottomSheet.Panel` (which auto-applies a `translateY` from it, the same
+"the primitive owns the interaction, you own the look" split `Slider.Thumb`
+uses for its position). Dragging past `dismissThreshold` (default 120px)
+and releasing closes the sheet; releasing before that snaps it back —
+either way, a stationary finger never leaves the sheet stuck mid-drag,
+since `Handle` refuses to let anything else steal the gesture once it
+starts.
+
+Dragging isn't independently reachable by assistive technology, so
+`BottomSheet.Close` (or `BottomSheet.Overlay`'s tap-outside-to-close) is
+the accessible dismiss path — the same relationship `Dialog.Close` has
+with `Dialog.Overlay`. `BottomSheet.Title`/`BottomSheet.Description` wire
+up the same accessibility linking as `Dialog`'s.
+
+Supports controlled (`open`/`onOpenChange`) and uncontrolled
+(`defaultOpen`) usage, `disabled`, `dismissThreshold`, and an imperative
+ref (`BottomSheetHandle` — `open`/`close`/`toggle`/`isOpen`).
+
+**Dev-mode checks.** Same controlled/uncontrolled warning as the other
+overlay primitives.
 
 ## Contributing
 
