@@ -69,6 +69,9 @@ Native.
 | [`PasswordToggleField`](#passwordtogglefield) | A password input with a show/hide toggle |
 | [`Toolbar`](#toolbar) | An accessible, disable-as-a-group row of controls |
 | [`BottomSheet`](#bottomsheet) | A panel that slides up from the bottom, with swipe-to-dismiss |
+| [`Stepper`](#stepper) | A +/- control for picking a numeric value |
+| [`Rating`](#rating) | Tap or drag across icons (stars, etc.) to pick a value |
+| [`SwipeableRow`](#swipeablerow) | A list row that reveals actions when swiped, like Mail/Gmail |
 
 ## Installation
 
@@ -1306,6 +1309,150 @@ ref (`BottomSheetHandle` — `open`/`close`/`toggle`/`isOpen`).
 
 **Dev-mode checks.** Same controlled/uncontrolled warning as the other
 overlay primitives.
+
+### Stepper
+
+```tsx
+import { Stepper } from 'anvil-native';
+import { Text } from 'react-native';
+
+function QuantityPicker({
+  quantity,
+  onQuantityChange,
+}: {
+  quantity: number;
+  onQuantityChange: (quantity: number) => void;
+}) {
+  return (
+    <Stepper.Root
+      value={quantity}
+      onValueChange={onQuantityChange}
+      min={1}
+      max={10}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}
+    >
+      <Stepper.DecrementButton>
+        <Text>−</Text>
+      </Stepper.DecrementButton>
+      <Stepper.Value />
+      <Stepper.IncrementButton>
+        <Text>+</Text>
+      </Stepper.IncrementButton>
+    </Stepper.Root>
+  );
+}
+```
+
+A +/- control for picking a number within `[min, max]` — a quantity
+picker being the classic case. `Stepper.DecrementButton`/`IncrementButton`
+disable themselves automatically at `min`/`max`, and `Stepper.Value`
+renders the current number as text by default (pass a render function for
+anything fancier). `Stepper.Root` itself also carries
+`accessibilityRole="adjustable"` with increment/decrement accessibility
+actions, the same double coverage (buttons *and* an adjustable container)
+`Slider` gives screen reader users.
+
+Supports controlled (`value`/`onValueChange`) and uncontrolled
+(`defaultValue`) usage, `min`/`max`/`step`, `disabled`, and an imperative
+ref (`StepperHandle` — `getValue`/`setValue`/`increment`/`decrement`).
+
+**Dev-mode checks.** Same controlled/uncontrolled warning as
+`Slider`/`Checkbox`/`Switch`, plus warnings when `min >= max` or `step`
+isn't greater than 0.
+
+### Rating
+
+```tsx
+import { Rating } from 'anvil-native';
+import { Text } from 'react-native';
+
+function StarRating({
+  value,
+  onValueChange,
+}: {
+  value: number;
+  onValueChange: (value: number) => void;
+}) {
+  return (
+    <Rating.Root
+      value={value}
+      onValueChange={onValueChange}
+      max={5}
+      style={{ flexDirection: 'row' }}
+    >
+      {[0, 1, 2, 3, 4].map((index) => (
+        <Rating.Item key={index} index={index}>
+          {({ filled }) => <Text>{filled ? '★' : '☆'}</Text>}
+        </Rating.Item>
+      ))}
+    </Rating.Root>
+  );
+}
+```
+
+Tap any item to jump straight to that rating, or drag across the row to
+adjust it continuously — both go through the same `PanResponder` on
+`Rating.Root`, so a plain tap is just a drag that never moved. `max` items
+are assumed to be equal width with no gaps between them (the common case);
+`Rating.Item`'s `filled` render-prop state is `true` when `index < value`,
+so you decide what "filled" looks like (a different icon, a color change,
+whatever). Items are hidden from assistive technology, since `Root` itself
+carries `accessibilityRole="adjustable"` with increment/decrement
+accessibility actions — the same pattern `Stepper`/`Slider` use.
+
+Supports controlled (`value`/`onValueChange`) and uncontrolled
+(`defaultValue`) usage, `disabled`, and an imperative ref (`RatingHandle`
+— `getValue`/`setValue`).
+
+**Dev-mode checks.** Same controlled/uncontrolled warning as the other
+value-holding primitives, plus a warning when `max` isn't greater than 0.
+
+### SwipeableRow
+
+```tsx
+import { SwipeableRow } from 'anvil-native';
+import { Text } from 'react-native';
+
+function EmailRow() {
+  return (
+    <SwipeableRow.Root style={{ borderRadius: 12, overflow: 'hidden' }}>
+      <SwipeableRow.RightActions style={{ width: 100, backgroundColor: 'crimson', alignItems: 'center', justifyContent: 'center' }}>
+        <SwipeableRow.Close>
+          <Text style={{ color: 'white' }}>Delete</Text>
+        </SwipeableRow.Close>
+      </SwipeableRow.RightActions>
+      <SwipeableRow.Content style={{ backgroundColor: 'white', padding: 16 }}>
+        <Text>Swipe me</Text>
+      </SwipeableRow.Content>
+    </SwipeableRow.Root>
+  );
+}
+```
+
+A list row that reveals action buttons when swiped horizontally — the
+Mail/Gmail pattern. `SwipeableRow.Content` carries the drag gesture and
+auto-applies a `translateX` from it (the same "primitive owns the
+interaction, you own the look" split `Slider.Thumb`/`BottomSheet.Panel`
+use); `LeftActions`/`RightActions` sit absolutely positioned behind it and
+measure their own width, which is what the drag clamps against and what a
+threshold-crossing release snaps open to. A fast enough flick opens or
+closes regardless of how far it dragged. `SwipeableRow.Close` (put it on
+an action, or anywhere else) snaps the row shut.
+
+Content deliberately never claims the gesture on mere touch-down — only
+once a horizontal-dominant drag is detected — so a row inside a
+vertically-scrolling list doesn't fight that list's own scroll gesture.
+Whichever side isn't currently revealed is hidden from assistive
+technology (dragging isn't independently reachable by it), so give
+important actions another path to the same effect if you need one.
+
+Supports controlled (`openSide`/`onOpenSideChange`, one of
+`'left' | 'right' | 'none'`) and uncontrolled (`defaultOpenSide`) usage,
+`disabled`, and an imperative ref (`SwipeableRowHandle` —
+`open`/`close`/`getOpenSide`).
+
+**Dev-mode checks.** Same controlled/uncontrolled warning (on `openSide`)
+as the other stateful primitives.
 
 ## Contributing
 

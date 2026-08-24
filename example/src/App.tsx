@@ -17,9 +17,12 @@ import {
   Popover,
   Progress,
   RadioGroup,
+  Rating,
   Select,
   Separator,
   Slider,
+  Stepper,
+  SwipeableRow,
   Switch,
   Tabs,
   Toggle,
@@ -99,6 +102,11 @@ export default function App() {
   const [bold, setBold] = useState(false);
   const [pin, setPin] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [rating, setRating] = useState(0);
+  const [emailOpenSide, setEmailOpenSide] = useState<'left' | 'right' | 'none'>(
+    'none'
+  );
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -843,6 +851,73 @@ export default function App() {
           </BottomSheet.Root>
 
           <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de Stepper
+          </Text>
+
+          <Stepper.Root
+            value={quantity}
+            onValueChange={setQuantity}
+            min={1}
+            max={10}
+            style={styles.stepperRow}
+          >
+            <Stepper.DecrementButton style={styles.stepperButton}>
+              <Text style={styles.stepperButtonLabel}>−</Text>
+            </Stepper.DecrementButton>
+            <Stepper.Value style={styles.stepperValue} />
+            <Stepper.IncrementButton style={styles.stepperButton}>
+              <Text style={styles.stepperButtonLabel}>+</Text>
+            </Stepper.IncrementButton>
+          </Stepper.Root>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de Rating
+          </Text>
+
+          <Rating.Root
+            value={rating}
+            onValueChange={setRating}
+            max={5}
+            style={styles.ratingRow}
+          >
+            {[0, 1, 2, 3, 4].map((index) => (
+              <Rating.Item key={index} index={index}>
+                {({ filled }) => (
+                  <Text
+                    style={[
+                      styles.ratingStar,
+                      filled && styles.ratingStarFilled,
+                    ]}
+                  >
+                    ★
+                  </Text>
+                )}
+              </Rating.Item>
+            ))}
+          </Rating.Root>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de SwipeableRow
+          </Text>
+
+          <SwipeableRow.Root
+            openSide={emailOpenSide}
+            onOpenSideChange={setEmailOpenSide}
+            style={styles.swipeableRowRoot}
+          >
+            <SwipeableRow.RightActions style={styles.swipeableRightActions}>
+              <SwipeableRow.Close style={styles.swipeableDeleteButton}>
+                <Text style={styles.swipeableActionLabel}>Eliminar</Text>
+              </SwipeableRow.Close>
+            </SwipeableRow.RightActions>
+            <SwipeableRow.Content style={styles.swipeableContent}>
+              <Text style={styles.checkboxLabel}>
+                Deslizá hacia la izquierda
+              </Text>
+            </SwipeableRow.Content>
+          </SwipeableRow.Root>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
             Anvil — demo de Toast
           </Text>
 
@@ -1440,5 +1515,67 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     backgroundColor: '#ccc',
+  },
+  stepperRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  stepperButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#ccc',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepperButtonLabel: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111',
+  },
+  stepperValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111',
+    minWidth: 24,
+    textAlign: 'center',
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  ratingStar: {
+    fontSize: 28,
+    color: '#ddd',
+  },
+  ratingStarFilled: {
+    color: '#f5a623',
+  },
+  swipeableRowRoot: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  swipeableRightActions: {
+    width: 100,
+    backgroundColor: '#b91c1c',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  swipeableDeleteButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  swipeableActionLabel: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  swipeableContent: {
+    backgroundColor: '#fafafa',
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#ccc',
   },
 });

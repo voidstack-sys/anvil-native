@@ -25,3 +25,6 @@ export * from './primitives/Avatar';
 export * from './primitives/PasswordToggleField';
 export * from './primitives/Toolbar';
 export * from './primitives/BottomSheet';
+export * from './primitives/Stepper';
+export * from './primitives/Rating';
+export * from './primitives/SwipeableRow';
