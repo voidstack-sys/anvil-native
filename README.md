@@ -72,6 +72,9 @@ Native.
 | [`Stepper`](#stepper) | A +/- control for picking a numeric value |
 | [`Rating`](#rating) | Tap or drag across icons (stars, etc.) to pick a value |
 | [`SwipeableRow`](#swipeablerow) | A list row that reveals actions when swiped, like Mail/Gmail |
+| [`Badge`](#badge) | A notification-count indicator, with automatic "99+" clamping |
+| [`PageIndicator`](#pageindicator) | Tappable dots for a carousel/onboarding flow |
+| [`SpeedDial`](#speeddial) | A floating action button that expands into several actions |
 
 ## Installation
 
@@ -1453,6 +1456,143 @@ Supports controlled (`openSide`/`onOpenSideChange`, one of
 
 **Dev-mode checks.** Same controlled/uncontrolled warning (on `openSide`)
 as the other stateful primitives.
+
+### Badge
+
+```tsx
+import { Badge } from 'anvil-native';
+import { Text, View } from 'react-native';
+
+function NotificationsIcon({ unreadCount }: { unreadCount: number }) {
+  return (
+    <View style={{ padding: 8 }}>
+      <Text style={{ fontSize: 24 }}>🔔</Text>
+      <Badge
+        count={unreadCount}
+        max={9}
+        style={{ position: 'absolute', top: 2, right: 2, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: 'crimson', alignItems: 'center', justifyContent: 'center' }}
+      >
+        {({ displayValue }) => (
+          <Text style={{ color: 'white', fontSize: 11 }}>{displayValue}</Text>
+        )}
+      </Badge>
+    </View>
+  );
+}
+```
+
+A single, non-compound component (like `VisuallyHidden`/`AspectRatio`) —
+you position it yourself, typically `position: 'absolute'` in a corner of
+a `position: 'relative'` anchor (React Native's default, so the wrapping
+`View` above doesn't need anything extra). Counts past `max` (default 99)
+render as `` `${max}+` ``; `count={0}` renders nothing unless `showZero`
+is set; omit `count` entirely for a plain, unstyled "dot" — just give
+`Badge` a size and background color via `style` and skip `children`.
+Renders `count` as plain text by default, or pass a render function (as
+above) for full control over how it looks.
+
+Hidden from assistive technology by default, since it's typically layered
+on an icon that already carries its own accessible label (e.g.
+`accessibilityLabel="Notifications, 4 unread"` on the icon button) —
+override `accessibilityElementsHidden`/`importantForAccessibility` if
+your case is different.
+
+### PageIndicator
+
+```tsx
+import { PageIndicator } from 'anvil-native';
+import { View } from 'react-native';
+
+function CarouselDots({
+  page,
+  onPageChange,
+}: {
+  page: number;
+  onPageChange: (page: number) => void;
+}) {
+  return (
+    <PageIndicator.Root
+      page={page}
+      onPageChange={onPageChange}
+      count={3}
+      style={{ flexDirection: 'row', gap: 8 }}
+    >
+      {[0, 1, 2].map((index) => (
+        <PageIndicator.Dot key={index} index={index}>
+          {({ active }) => (
+            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: active ? 'black' : '#ccc' }} />
+          )}
+        </PageIndicator.Dot>
+      ))}
+    </PageIndicator.Root>
+  );
+}
+```
+
+The tappable dots for a carousel or onboarding flow — pair `page` with
+whatever actually drives your carousel (a `ScrollView`'s `onMomentumScrollEnd`,
+a `FlatList`'s `onViewableItemsChanged`, a plain "current slide" index).
+`PageIndicator.Root` carries `accessibilityRole="pager"` with
+increment/decrement accessibility actions, alongside the individually
+tappable/accessible `Dot`s — the same double coverage `Stepper`/`Rating`
+give screen reader users.
+
+Supports controlled (`page`/`onPageChange`) and uncontrolled
+(`defaultPage`) usage, `disabled`, and an imperative ref
+(`PageIndicatorHandle` — `getPage`/`setPage`).
+
+**Dev-mode checks.** Same controlled/uncontrolled warning as the other
+value-holding primitives, plus a warning when `count` isn't greater than
+0.
+
+### SpeedDial
+
+```tsx
+import { SpeedDial } from 'anvil-native';
+import { Text, View } from 'react-native';
+
+function FabMenu() {
+  return (
+    <SpeedDial.Root>
+      <View style={{ alignItems: 'flex-end', gap: 12 }}>
+        <SpeedDial.Actions style={{ alignItems: 'flex-end', gap: 8 }}>
+          <SpeedDial.Action onPress={() => {}}>
+            <Text>Photo</Text>
+          </SpeedDial.Action>
+          <SpeedDial.Action onPress={() => {}}>
+            <Text>Note</Text>
+          </SpeedDial.Action>
+        </SpeedDial.Actions>
+        <SpeedDial.Trigger>
+          {({ open }) => <Text>{open ? '×' : '+'}</Text>}
+        </SpeedDial.Trigger>
+      </View>
+    </SpeedDial.Root>
+  );
+}
+```
+
+A floating action button that expands into several actions — the Android
+Material "speed dial" pattern. `SpeedDial.Trigger` toggles `SpeedDial.Actions`
+open/closed (not rendered at all while closed, unless you pass `forceMount`
+to handle your own exit animation); `SpeedDial.Action` closes the dial
+after firing its `onPress` by default (`closeOnPress={false}` to opt out).
+Deliberately doesn't use a `Modal` — a FAB is normally already positioned
+at a fixed spot in your screen, not relative to some inline trigger buried
+in scrollable content, so it doesn't need one to escape clipping.
+
+`SpeedDial.Backdrop` is an optional, purely decorative full-screen
+`Pressable` (`onPress` closes the dial) for tap-outside-to-close — place
+it as a sibling of `Trigger`/`Actions` inside your own screen-root `View`,
+since without a `Modal` it can only cover whatever `position: 'relative'`
+ancestor you give it.
+
+Supports controlled (`open`/`onOpenChange`) and uncontrolled
+(`defaultOpen`) usage, `disabled`, and an imperative ref (`SpeedDialHandle`
+— `open`/`close`/`toggle`/`isOpen`).
+
+**Dev-mode checks.** Same controlled/uncontrolled warning as the other
+overlay primitives.
 
 ## Contributing
 

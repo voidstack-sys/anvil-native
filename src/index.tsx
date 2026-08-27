@@ -28,3 +28,6 @@ export * from './primitives/BottomSheet';
 export * from './primitives/Stepper';
 export * from './primitives/Rating';
 export * from './primitives/SwipeableRow';
+export * from './primitives/Badge';
+export * from './primitives/PageIndicator';
+export * from './primitives/SpeedDial';

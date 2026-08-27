@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   Accordion,
   AlertDialog,
   AspectRatio,
   Avatar,
+  Badge,
   BottomSheet,
   Checkbox,
   Collapsible,
@@ -12,6 +13,7 @@ import {
   Dialog,
   Label,
   Menu,
+  PageIndicator,
   PasswordToggleField,
   PinInput,
   Popover,
@@ -21,6 +23,7 @@ import {
   Select,
   Separator,
   Slider,
+  SpeedDial,
   Stepper,
   SwipeableRow,
   Switch,
@@ -107,6 +110,8 @@ export default function App() {
   const [emailOpenSide, setEmailOpenSide] = useState<'left' | 'right' | 'none'>(
     'none'
   );
+  const [carouselPage, setCarouselPage] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(4);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -918,6 +923,73 @@ export default function App() {
           </SwipeableRow.Root>
 
           <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de Badge
+          </Text>
+
+          <Pressable
+            onPress={() => setUnreadCount((c) => (c > 0 ? c - 1 : 12))}
+            style={styles.badgeAnchor}
+          >
+            <Text style={styles.badgeIcon}>🔔</Text>
+            <Badge count={unreadCount} max={9} style={styles.badgeDot}>
+              {({ displayValue }) => (
+                <Text style={styles.badgeText}>{displayValue}</Text>
+              )}
+            </Badge>
+          </Pressable>
+          <Text style={styles.checkboxLabel}>
+            Tocá la campana para bajar el contador
+          </Text>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de PageIndicator
+          </Text>
+
+          <Text style={styles.checkboxLabel}>
+            Página {carouselPage + 1} de 3
+          </Text>
+          <PageIndicator.Root
+            page={carouselPage}
+            onPageChange={setCarouselPage}
+            count={3}
+            style={styles.pageIndicatorRow}
+          >
+            {[0, 1, 2].map((index) => (
+              <PageIndicator.Dot key={index} index={index}>
+                {({ active }) => (
+                  <View
+                    style={[styles.pageDot, active && styles.pageDotActive]}
+                  />
+                )}
+              </PageIndicator.Dot>
+            ))}
+          </PageIndicator.Root>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de SpeedDial
+          </Text>
+
+          <SpeedDial.Root>
+            <View style={styles.speedDialContainer}>
+              <SpeedDial.Actions style={styles.speedDialActions}>
+                <SpeedDial.Action style={styles.speedDialActionButton}>
+                  <Text style={styles.speedDialActionLabel}>Foto</Text>
+                </SpeedDial.Action>
+                <SpeedDial.Action style={styles.speedDialActionButton}>
+                  <Text style={styles.speedDialActionLabel}>Nota</Text>
+                </SpeedDial.Action>
+              </SpeedDial.Actions>
+              <SpeedDial.Trigger style={styles.speedDialTrigger}>
+                {({ open }) => (
+                  <Text style={styles.speedDialTriggerLabel}>
+                    {open ? '×' : '+'}
+                  </Text>
+                )}
+              </SpeedDial.Trigger>
+            </View>
+          </SpeedDial.Root>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
             Anvil — demo de Toast
           </Text>
 
@@ -1577,5 +1649,76 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: '#ccc',
+  },
+  badgeAnchor: {
+    alignSelf: 'flex-start',
+    padding: 8,
+  },
+  badgeIcon: {
+    fontSize: 28,
+  },
+  badgeDot: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#b91c1c',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  pageIndicatorRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  pageDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ccc',
+  },
+  pageDotActive: {
+    backgroundColor: '#111',
+  },
+  speedDialContainer: {
+    alignItems: 'flex-end',
+    gap: 12,
+  },
+  speedDialActions: {
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  speedDialActionButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#ccc',
+  },
+  speedDialActionLabel: {
+    color: '#111',
+    fontWeight: '600',
+  },
+  speedDialTrigger: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#111',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  speedDialTriggerLabel: {
+    color: '#fff',
+    fontSize: 28,
+    fontWeight: '300',
+    lineHeight: 32,
   },
 });
