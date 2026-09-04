@@ -75,6 +75,10 @@ Native.
 | [`Badge`](#badge) | A notification-count indicator, with automatic "99+" clamping |
 | [`PageIndicator`](#pageindicator) | Tappable dots for a carousel/onboarding flow |
 | [`SpeedDial`](#speeddial) | A floating action button that expands into several actions |
+| [`Chip`](#chip) | A selectable and/or removable tag, standalone or in a filter row |
+| [`ActionSheet`](#actionsheet) | A bottom menu of one-shot actions, with a dedicated Cancel |
+| [`Drawer`](#drawer) | A panel that slides in from a screen edge, with swipe-to-dismiss |
+| [`ScrollArea`](#scrollarea) | A scroll container with a draggable, fully custom-styled scrollbar |
 
 ## Installation
 
@@ -1593,6 +1597,214 @@ Supports controlled (`open`/`onOpenChange`) and uncontrolled
 
 **Dev-mode checks.** Same controlled/uncontrolled warning as the other
 overlay primitives.
+
+### Chip
+
+```tsx
+import { Chip } from 'anvil-native';
+import { Text, View } from 'react-native';
+
+function FilterChip({ label }: { label: string }) {
+  return (
+    <Chip.Root defaultSelected={false}>
+      {({ selected }) => (
+        <View style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: selected ? 'black' : 'white', borderWidth: 1, borderColor: '#ccc' }}>
+          <Text style={{ color: selected ? 'white' : 'black' }}>{label}</Text>
+        </View>
+      )}
+    </Chip.Root>
+  );
+}
+
+function RemovableChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <Chip.Root onRemove={onRemove} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+      <Text>{label}</Text>
+      <Chip.RemoveButton>
+        <Text>×</Text>
+      </Chip.RemoveButton>
+    </Chip.Root>
+  );
+}
+```
+
+A single, non-compound-ish primitive (`Root` plus one optional subpart)
+covering two related but distinct chip behaviors. **Selection** is
+opt-in: pass none of `selected`, `defaultSelected`, or `onSelectedChange`
+for a plain, non-selectable tag whose press only runs your own `onPress`
+— pass any of them (`defaultSelected={false}` counts too, since it's
+about whether the prop was given, not its value) to make it a
+toggleable chip, the same controlled/uncontrolled shape as `Toggle`. For
+a row of mutually-exclusive or multi-select chips, just render several
+`Chip.Root`s independently (each owns its own selected state) — reach
+for `ToggleGroup` instead if you need one shared value across the row.
+
+**Removal** is opt-in via `onRemove`: give it a function and nest
+`Chip.RemoveButton` to get a dismiss control. On native, nested
+`Pressable`s resolve to the innermost one touched, so `RemoveButton`'s
+press never also toggles the outer chip's selection. On web, though, a
+`Pressable` with an interactive `accessibilityRole` renders an HTML
+`<button>`, and a `<button>` can't contain another `<button>` — so a
+removable `Chip.Root` deliberately omits its own `button`/`togglebutton`
+role (tap handling is unaffected either way; only the host element
+choice changes).
+
+**Dev-mode checks.** Same controlled/uncontrolled warning as the other
+value-holding primitives.
+
+### ActionSheet
+
+```tsx
+import { ActionSheet } from 'anvil-native';
+import { Text, View } from 'react-native';
+
+function PostOptions() {
+  return (
+    <ActionSheet.Root>
+      <ActionSheet.Trigger>
+        <Text>Options</Text>
+      </ActionSheet.Trigger>
+      <ActionSheet.Content>
+        <ActionSheet.Overlay style={{ backgroundColor: 'rgba(0,0,0,0.4)' }} />
+        <View style={{ backgroundColor: 'white', borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
+          <ActionSheet.Title>Options</ActionSheet.Title>
+          <ActionSheet.Action onPress={() => {}}>
+            <Text>Edit</Text>
+          </ActionSheet.Action>
+          <ActionSheet.Action onPress={() => {}}>
+            <Text style={{ color: 'crimson' }}>Delete</Text>
+          </ActionSheet.Action>
+          <ActionSheet.Cancel>
+            <Text>Cancel</Text>
+          </ActionSheet.Cancel>
+        </View>
+      </ActionSheet.Content>
+    </ActionSheet.Root>
+  );
+}
+```
+
+The native iOS/Android "action sheet" pattern: a bottom menu of one-shot
+actions plus a dedicated way out. Structurally close to `BottomSheet`
+(`Content` renders a `Modal` with `animationType="slide"`) but with menu
+semantics instead of freeform drag-to-dismiss content — `Content` carries
+`accessibilityRole="menu"`, `ActionSheet.Action` is `"menuitem"` and
+closes the sheet after firing its `onPress` by default (`closeOnPress={false}`
+to opt out, same as `SpeedDial.Action`), and `ActionSheet.Cancel` always
+closes regardless of `closeOnPress`. No drag gesture at all — dismissal
+is tap-driven only (an `Action`, `Cancel`, or `ActionSheet.Overlay`'s
+tap-outside), which is also why there's no `Handle`/`Panel` pair here
+the way `BottomSheet` has one.
+
+Supports controlled (`open`/`onOpenChange`) and uncontrolled
+(`defaultOpen`) usage, `disabled`, and an imperative ref
+(`ActionSheetHandle` — `open`/`close`/`toggle`/`isOpen`).
+
+**Dev-mode checks.** Same controlled/uncontrolled warning as the other
+overlay primitives.
+
+### Drawer
+
+```tsx
+import { Drawer } from 'anvil-native';
+import { Text, View } from 'react-native';
+
+function NavDrawer() {
+  return (
+    <Drawer.Root side="left">
+      <Drawer.Trigger>
+        <Text>☰ Menu</Text>
+      </Drawer.Trigger>
+      <Drawer.Content>
+        <Drawer.Overlay style={{ backgroundColor: 'rgba(0,0,0,0.4)' }} />
+        <Drawer.Panel style={{ width: 260, height: '100%', backgroundColor: 'white' }}>
+          <Drawer.Title>Menu</Drawer.Title>
+          <Drawer.Close>
+            <Text>Close</Text>
+          </Drawer.Close>
+        </Drawer.Panel>
+      </Drawer.Content>
+    </Drawer.Root>
+  );
+}
+```
+
+A panel that slides in from a screen edge (`side="left"`, the default,
+or `"right"`) — the standard mobile navigation-menu pattern. `Drawer`
+mirrors `BottomSheet` almost exactly (same `Modal`-with-slide-animation
+`Content`, same swipe-to-dismiss `Handle`/`Panel` pair, same
+`Title`/`Description` accessibility linking, same "stationary finger
+never leaves it stuck mid-drag" `Handle` guarantee), just along the
+horizontal axis instead of vertical: `Handle`'s drag distance is
+measured toward whichever edge the `side` is opposite to, and `Panel`
+auto-applies the matching `translateX`.
+
+`side` is expected to stay constant for the component's lifetime (like
+`ToggleGroup`'s `type`) — switching it mid-flight is a layout change,
+not a state change.
+
+Supports controlled (`open`/`onOpenChange`) and uncontrolled
+(`defaultOpen`) usage, `disabled`, `side`, `dismissThreshold`, and an
+imperative ref (`DrawerHandle` — `open`/`close`/`toggle`/`isOpen`).
+
+**Dev-mode checks.** Same controlled/uncontrolled warning as the other
+overlay primitives, plus a warning if `side` changes after the initial
+render.
+
+### ScrollArea
+
+```tsx
+import { ScrollArea } from 'anvil-native';
+import { Text, View } from 'react-native';
+
+function List({ items }: { items: string[] }) {
+  return (
+    <ScrollArea.Root style={{ height: 200, flexDirection: 'row' }}>
+      <ScrollArea.Viewport style={{ flex: 1 }}>
+        {items.map((item) => (
+          <Text key={item} style={{ padding: 12 }}>{item}</Text>
+        ))}
+      </ScrollArea.Viewport>
+      <ScrollArea.Scrollbar style={{ width: 6, backgroundColor: '#eee' }}>
+        <ScrollArea.Thumb style={{ flex: 1 }}>
+          {({ size, offset }) => (
+            <View style={{ position: 'absolute', left: 0, right: 0, backgroundColor: '#999', height: `${size * 100}%`, top: `${offset * (1 - size) * 100}%` }} />
+          )}
+        </ScrollArea.Thumb>
+      </ScrollArea.Scrollbar>
+    </ScrollArea.Root>
+  );
+}
+```
+
+A scroll container with a fully custom-styled scrollbar — Radix's
+`ScrollArea` parity, but for a mobile-first library the interesting part
+isn't the visual chrome, it's that the thumb is draggable: on a long
+list, dragging it is a genuinely faster way to scroll than flicking
+repeatedly. `ScrollArea.Viewport` wraps a real `ScrollView` (native
+momentum scrolling still works exactly as it always did) and measures
+its own size, its content's size, and the current scroll offset;
+`ScrollArea.Thumb`'s render-prop turns those into a `size`/`offset` pair
+(both 0–1 fractions of the track) so you draw the actual pill however
+you like, and dragging the `Thumb` itself calls back into the
+`Viewport`'s scroll position, scaled so the thumb tracks your finger 1:1
+regardless of how much shorter it is than the track (the same
+finger-tracking math `Slider.Thumb` uses, just inverted — drag distance
+in, scroll offset out, instead of the other way around).
+
+`ScrollArea.Scrollbar` only renders once the content actually overflows
+the viewport (pass `forceMount` to always render it), and — like `Badge`
+and `SpeedDial.Backdrop` — is hidden from assistive technology by
+default: it's a visual/pointer-only echo of the `Viewport`'s own native
+scrollable region, which already carries its own accessibility handling.
+
+`orientation` (`"vertical"`, the default, or `"horizontal"`) is expected
+to stay constant for the component's lifetime, like `ToggleGroup`'s
+`type`. Exposes an imperative ref (`ScrollAreaHandle` —
+`scrollTo`/`getScrollOffset`).
+
+**Dev-mode checks.** A warning if `orientation` changes after the
+initial render.
 
 ## Contributing
 

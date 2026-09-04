@@ -2,15 +2,18 @@ import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   Accordion,
+  ActionSheet,
   AlertDialog,
   AspectRatio,
   Avatar,
   Badge,
   BottomSheet,
   Checkbox,
+  Chip,
   Collapsible,
   ContextMenu,
   Dialog,
+  Drawer,
   Label,
   Menu,
   PageIndicator,
@@ -20,6 +23,7 @@ import {
   Progress,
   RadioGroup,
   Rating,
+  ScrollArea,
   Select,
   Separator,
   Slider,
@@ -36,6 +40,7 @@ import {
   VisuallyHidden,
   type BottomSheetHandle,
   type CheckboxHandle,
+  type DrawerHandle,
   type ToastHandle,
 } from 'anvil-native';
 
@@ -112,6 +117,9 @@ export default function App() {
   );
   const [carouselPage, setCarouselPage] = useState(0);
   const [unreadCount, setUnreadCount] = useState(4);
+  const [lastAction, setLastAction] = useState('Ninguna');
+  const [showRemovableChip, setShowRemovableChip] = useState(true);
+  const drawerRef = useRef<DrawerHandle>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -990,6 +998,141 @@ export default function App() {
           </SpeedDial.Root>
 
           <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de Chip
+          </Text>
+
+          <View style={styles.chipRow}>
+            {['Todos', 'Activos', 'Archivados'].map((label, index) => (
+              <Chip.Root key={label} defaultSelected={index === 0}>
+                {({ selected }) => (
+                  <View style={[styles.chip, selected && styles.chipActive]}>
+                    <Text
+                      style={[
+                        styles.chipLabel,
+                        selected && styles.chipLabelActive,
+                      ]}
+                    >
+                      {label}
+                    </Text>
+                  </View>
+                )}
+              </Chip.Root>
+            ))}
+          </View>
+
+          {showRemovableChip && (
+            <View style={[styles.chipRow, styles.sectionSpacing]}>
+              <Chip.Root
+                onRemove={() => setShowRemovableChip(false)}
+                style={[styles.chip, styles.chipRemovable]}
+              >
+                <Text style={styles.chipLabel}>react-native</Text>
+                <Chip.RemoveButton style={styles.chipRemoveButton}>
+                  <Text style={styles.chipRemoveLabel}>×</Text>
+                </Chip.RemoveButton>
+              </Chip.Root>
+            </View>
+          )}
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de ActionSheet
+          </Text>
+
+          <ActionSheet.Root>
+            <ActionSheet.Trigger style={styles.dialogTriggerButton}>
+              <Text style={styles.dialogTriggerLabel}>Opciones del post</Text>
+            </ActionSheet.Trigger>
+            <ActionSheet.Content>
+              <ActionSheet.Overlay style={styles.dialogOverlay} />
+              <View style={styles.actionSheetPanel}>
+                <ActionSheet.Title style={styles.dialogTitle}>
+                  Opciones
+                </ActionSheet.Title>
+                <ActionSheet.Action
+                  style={styles.actionSheetAction}
+                  onPress={() => setLastAction('Editar')}
+                >
+                  <Text style={styles.actionSheetActionLabel}>Editar</Text>
+                </ActionSheet.Action>
+                <ActionSheet.Action
+                  style={styles.actionSheetAction}
+                  onPress={() => setLastAction('Duplicar')}
+                >
+                  <Text style={styles.actionSheetActionLabel}>Duplicar</Text>
+                </ActionSheet.Action>
+                <ActionSheet.Action
+                  style={styles.actionSheetAction}
+                  onPress={() => setLastAction('Eliminar')}
+                >
+                  <Text style={styles.actionSheetDestructiveLabel}>
+                    Eliminar
+                  </Text>
+                </ActionSheet.Action>
+                <ActionSheet.Cancel style={styles.dialogCancelButton}>
+                  <Text style={styles.dialogCancelLabel}>Cancelar</Text>
+                </ActionSheet.Cancel>
+              </View>
+            </ActionSheet.Content>
+          </ActionSheet.Root>
+          <Text style={styles.checkboxLabel}>Última acción: {lastAction}</Text>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de Drawer
+          </Text>
+
+          <Drawer.Root ref={drawerRef}>
+            <Drawer.Trigger style={styles.dialogTriggerButton}>
+              <Text style={styles.dialogTriggerLabel}>☰ Menú</Text>
+            </Drawer.Trigger>
+            <Drawer.Content>
+              <Drawer.Overlay style={styles.dialogOverlay} />
+              <Drawer.Panel style={styles.drawerPanel}>
+                <Drawer.Title style={styles.dialogTitle}>Menú</Drawer.Title>
+                <Drawer.Description style={styles.dialogDescription}>
+                  Navegá a otra sección.
+                </Drawer.Description>
+                {['Inicio', 'Buscar', 'Perfil', 'Ajustes'].map((label) => (
+                  <Text key={label} style={styles.drawerNavItem}>
+                    {label}
+                  </Text>
+                ))}
+                <Drawer.Close style={styles.dialogCancelButton}>
+                  <Text style={styles.dialogCancelLabel}>Cerrar</Text>
+                </Drawer.Close>
+              </Drawer.Panel>
+            </Drawer.Content>
+          </Drawer.Root>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de ScrollArea
+          </Text>
+
+          <ScrollArea.Root style={styles.scrollAreaRoot}>
+            <ScrollArea.Viewport style={styles.scrollAreaViewport}>
+              {Array.from({ length: 20 }).map((_, index) => (
+                <Text key={index} style={styles.scrollAreaRow}>
+                  Fila {index + 1}
+                </Text>
+              ))}
+            </ScrollArea.Viewport>
+            <ScrollArea.Scrollbar style={styles.scrollAreaScrollbar}>
+              <ScrollArea.Thumb style={styles.scrollAreaThumbTrack}>
+                {({ size, offset }) => (
+                  <View
+                    style={[
+                      styles.scrollAreaThumb,
+                      {
+                        height: `${size * 100}%`,
+                        top: `${offset * (1 - size) * 100}%`,
+                      },
+                    ]}
+                  />
+                )}
+              </ScrollArea.Thumb>
+            </ScrollArea.Scrollbar>
+          </ScrollArea.Root>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
             Anvil — demo de Toast
           </Text>
 
@@ -1720,5 +1863,113 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '300',
     lineHeight: 32,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#ccc',
+    backgroundColor: '#fff',
+  },
+  chipActive: {
+    backgroundColor: '#111',
+    borderColor: '#111',
+  },
+  chipRemovable: {
+    backgroundColor: '#f5f5f5',
+  },
+  chipLabel: {
+    color: '#111',
+    fontWeight: '600',
+  },
+  chipLabelActive: {
+    color: '#fff',
+  },
+  chipRemoveButton: {
+    paddingHorizontal: 4,
+  },
+  chipRemoveLabel: {
+    color: '#666',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  actionSheetPanel: {
+    width: '100%',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 32,
+    backgroundColor: '#fff',
+    gap: 4,
+  },
+  actionSheetAction: {
+    paddingVertical: 14,
+  },
+  actionSheetActionLabel: {
+    fontSize: 16,
+    color: '#111',
+  },
+  actionSheetDestructiveLabel: {
+    fontSize: 16,
+    color: '#b91c1c',
+    fontWeight: '600',
+  },
+  drawerPanel: {
+    width: 260,
+    height: '100%',
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingTop: 64,
+    paddingBottom: 32,
+    borderTopRightRadius: 20,
+    borderBottomRightRadius: 20,
+    gap: 4,
+  },
+  drawerNavItem: {
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#111',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: '#eee',
+  },
+  scrollAreaRoot: {
+    height: 160,
+    flexDirection: 'row',
+  },
+  scrollAreaViewport: {
+    flex: 1,
+  },
+  scrollAreaRow: {
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: '#eee',
+  },
+  scrollAreaScrollbar: {
+    width: 6,
+    marginLeft: 8,
+    backgroundColor: '#eee',
+    borderRadius: 3,
+  },
+  scrollAreaThumbTrack: {
+    flex: 1,
+    position: 'relative',
+  },
+  scrollAreaThumb: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    backgroundColor: '#999',
+    borderRadius: 3,
   },
 });

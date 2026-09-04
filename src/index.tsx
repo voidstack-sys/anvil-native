@@ -31,3 +31,7 @@ export * from './primitives/SwipeableRow';
 export * from './primitives/Badge';
 export * from './primitives/PageIndicator';
 export * from './primitives/SpeedDial';
+export * from './primitives/ActionSheet';
+export * from './primitives/Chip';
+export * from './primitives/Drawer';
+export * from './primitives/ScrollArea';

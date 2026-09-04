@@ -34,11 +34,12 @@ export function controlledChangeMessage(
 export function typeChangeMessage(
   componentName: string,
   from: string,
-  to: string
+  to: string,
+  propName: string = 'type'
 ): string {
   return (
-    `${componentName}: the \`type\` prop changed from "${from}" to "${to}" after the initial ` +
-    'render. `type` is expected to stay constant for the lifetime of the component.'
+    `${componentName}: the \`${propName}\` prop changed from "${from}" to "${to}" after the ` +
+    `initial render. \`${propName}\` is expected to stay constant for the lifetime of the component.`
   );
 }
 
