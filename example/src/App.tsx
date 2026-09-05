@@ -8,9 +8,11 @@ import {
   Avatar,
   Badge,
   BottomSheet,
+  Carousel,
   Checkbox,
   Chip,
   Collapsible,
+  Combobox,
   ContextMenu,
   Dialog,
   Drawer,
@@ -26,7 +28,9 @@ import {
   ScrollArea,
   Select,
   Separator,
+  Skeleton,
   Slider,
+  SortableList,
   SpeedDial,
   Stepper,
   SwipeableRow,
@@ -120,6 +124,14 @@ export default function App() {
   const [lastAction, setLastAction] = useState('Ninguna');
   const [showRemovableChip, setShowRemovableChip] = useState(true);
   const drawerRef = useRef<DrawerHandle>(null);
+  const [comboboxValue, setComboboxValue] = useState<string | null>(null);
+  const [comboboxQuery, setComboboxQuery] = useState('');
+  const [sortableOrder, setSortableOrder] = useState([
+    'Comprar café',
+    'Pasear al perro',
+    'Enviar informe',
+  ]);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -950,11 +962,32 @@ export default function App() {
           </Text>
 
           <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de Carousel
+          </Text>
+
+          <Carousel.Root
+            page={carouselPage}
+            onPageChange={setCarouselPage}
+            count={3}
+          >
+            <Carousel.Viewport style={styles.carouselViewport}>
+              <Carousel.Track>
+                {['🍎', '🍌', '🍒'].map((emoji, index) => (
+                  <Carousel.Slide key={index} style={styles.carouselSlide}>
+                    <Text style={styles.carouselEmoji}>{emoji}</Text>
+                  </Carousel.Slide>
+                ))}
+              </Carousel.Track>
+            </Carousel.Viewport>
+          </Carousel.Root>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
             Anvil — demo de PageIndicator
           </Text>
 
           <Text style={styles.checkboxLabel}>
-            Página {carouselPage + 1} de 3
+            Página {carouselPage + 1} de 3 -- comparte estado con el Carousel de
+            arriba
           </Text>
           <PageIndicator.Root
             page={carouselPage}
@@ -1131,6 +1164,102 @@ export default function App() {
               </ScrollArea.Thumb>
             </ScrollArea.Scrollbar>
           </ScrollArea.Root>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de Combobox
+          </Text>
+
+          <Combobox.Root
+            value={comboboxValue}
+            onValueChange={setComboboxValue}
+            query={comboboxQuery}
+            onQueryChange={setComboboxQuery}
+          >
+            <Combobox.Input
+              testID="combobox-input"
+              style={styles.comboboxInput}
+              placeholder="Buscar una fruta..."
+            />
+            <Combobox.Content
+              testID="combobox-content"
+              style={styles.comboboxContent}
+            >
+              {FRUIT_OPTIONS.filter((option) =>
+                option.label.toLowerCase().includes(comboboxQuery.toLowerCase())
+              ).map((option) => (
+                <Combobox.Item
+                  key={option.value}
+                  value={option.value}
+                  testID={`combobox-item-${option.value}`}
+                  style={styles.comboboxItem}
+                >
+                  <Combobox.ItemText style={styles.comboboxItemLabel}>
+                    {option.label}
+                  </Combobox.ItemText>
+                </Combobox.Item>
+              ))}
+            </Combobox.Content>
+          </Combobox.Root>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de SortableList
+          </Text>
+
+          <SortableList.Root
+            order={sortableOrder}
+            onOrderChange={setSortableOrder}
+          >
+            {sortableOrder.map((task) => (
+              <SortableList.Item
+                key={task}
+                itemKey={task}
+                testID={`sortable-item-${task}`}
+                style={styles.sortableItem}
+              >
+                <Text style={styles.sortableItemLabel}>{task}</Text>
+                <SortableList.Handle
+                  testID={`sortable-handle-${task}`}
+                  style={styles.sortableHandle}
+                >
+                  <Text style={styles.sortableHandleLabel}>☰</Text>
+                </SortableList.Handle>
+              </SortableList.Item>
+            ))}
+          </SortableList.Root>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de Skeleton
+          </Text>
+
+          <Pressable
+            onPress={() => setIsLoadingProfile((current) => !current)}
+            style={styles.dialogTriggerButton}
+          >
+            <Text style={styles.dialogTriggerLabel}>
+              {isLoadingProfile ? 'Mostrar contenido' : 'Mostrar carga'}
+            </Text>
+          </Pressable>
+          {isLoadingProfile ? (
+            <View style={styles.skeletonRow}>
+              <Skeleton style={styles.skeletonAvatar} />
+              <View style={styles.skeletonLines}>
+                <Skeleton style={styles.skeletonLine} />
+                <Skeleton
+                  style={[styles.skeletonLine, styles.skeletonLineShort]}
+                />
+              </View>
+            </View>
+          ) : (
+            <View style={styles.skeletonRow}>
+              <View
+                style={[styles.skeletonAvatar, styles.skeletonAvatarLoaded]}
+              />
+              <View style={styles.skeletonLines}>
+                <Text style={styles.checkboxLabel}>user test</Text>
+                <Text style={styles.checkboxLabel}>@voidstack</Text>
+              </View>
+            </View>
+          )}
 
           <Text style={[styles.title, styles.sectionSpacing]}>
             Anvil — demo de Toast
@@ -1971,5 +2100,91 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: '#999',
     borderRadius: 3,
+  },
+  carouselViewport: {
+    height: 160,
+    overflow: 'hidden',
+    borderRadius: 16,
+  },
+  carouselSlide: {
+    height: 160,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  carouselEmoji: {
+    fontSize: 64,
+  },
+  comboboxInput: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  comboboxContent: {
+    width: 220,
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#ccc',
+    paddingVertical: 4,
+  },
+  comboboxItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  comboboxItemLabel: {
+    fontSize: 16,
+    color: '#111',
+  },
+  sortableItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    backgroundColor: '#fff',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: '#eee',
+  },
+  sortableItemLabel: {
+    fontSize: 16,
+    color: '#111',
+  },
+  sortableHandle: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  sortableHandleLabel: {
+    fontSize: 18,
+    color: '#999',
+  },
+  skeletonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  skeletonAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#ccc',
+  },
+  skeletonAvatarLoaded: {
+    backgroundColor: '#111',
+  },
+  skeletonLines: {
+    gap: 8,
+    flex: 1,
+  },
+  skeletonLine: {
+    height: 14,
+    borderRadius: 4,
+    backgroundColor: '#ccc',
+    width: '80%',
+  },
+  skeletonLineShort: {
+    width: '50%',
   },
 });

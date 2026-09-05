@@ -35,3 +35,7 @@ export * from './primitives/ActionSheet';
 export * from './primitives/Chip';
 export * from './primitives/Drawer';
 export * from './primitives/ScrollArea';
+export * from './primitives/Skeleton';
+export * from './primitives/Carousel';
+export * from './primitives/Combobox';
+export * from './primitives/SortableList';

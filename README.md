@@ -79,6 +79,10 @@ Native.
 | [`ActionSheet`](#actionsheet) | A bottom menu of one-shot actions, with a dedicated Cancel |
 | [`Drawer`](#drawer) | A panel that slides in from a screen edge, with swipe-to-dismiss |
 | [`ScrollArea`](#scrollarea) | A scroll container with a draggable, fully custom-styled scrollbar |
+| [`Skeleton`](#skeleton) | A pulsing loading placeholder |
+| [`Carousel`](#carousel) | Swipe between full-bleed pages, with snap-to-page |
+| [`Combobox`](#combobox) | A text input that filters and picks from a floating list of options |
+| [`SortableList`](#sortablelist) | A list reorderable by long-press-and-drag |
 
 ## Installation
 
@@ -1805,6 +1809,186 @@ to stay constant for the component's lifetime, like `ToggleGroup`'s
 
 **Dev-mode checks.** A warning if `orientation` changes after the
 initial render.
+
+### Skeleton
+
+```tsx
+import { Skeleton } from 'anvil-native';
+import { View } from 'react-native';
+
+function ProfileSkeleton() {
+  return (
+    <View style={{ flexDirection: 'row', gap: 12 }}>
+      <Skeleton style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#ccc' }} />
+      <View style={{ gap: 8, flex: 1 }}>
+        <Skeleton style={{ height: 14, width: '80%', borderRadius: 4, backgroundColor: '#ccc' }} />
+        <Skeleton style={{ height: 14, width: '50%', borderRadius: 4, backgroundColor: '#ccc' }} />
+      </View>
+    </View>
+  );
+}
+```
+
+A single, non-compound component (like `Badge`/`AspectRatio`) whose only
+job is the loop: it pulses its own opacity between 0.3 and 1 on a
+700ms cycle and leaves everything else -- size, shape, color -- to your
+`style`, the same "primitive owns the interaction, you own the look"
+split every other primitive here follows. Set `animate={false}` for a
+static placeholder instead (e.g. if you're checking a reduced-motion
+preference yourself). Hidden from assistive technology by default, like
+`Badge` -- a pulsing gray box has nothing to announce.
+
+### Carousel
+
+```tsx
+import { Carousel } from 'anvil-native';
+import { View } from 'react-native';
+
+function ImageCarousel({ page, onPageChange }: { page: number; onPageChange: (page: number) => void }) {
+  return (
+    <Carousel.Root page={page} onPageChange={onPageChange} count={3}>
+      <Carousel.Viewport style={{ height: 200, overflow: 'hidden' }}>
+        <Carousel.Track>
+          {[0, 1, 2].map((index) => (
+            <Carousel.Slide key={index} style={{ backgroundColor: '#eee' }} />
+          ))}
+        </Carousel.Track>
+      </Carousel.Viewport>
+    </Carousel.Root>
+  );
+}
+```
+
+Swipeable, full-bleed pages with snap-to-page -- pair it with
+`PageIndicator` (sharing the same `page`/`onPageChange`) for dots
+underneath, exactly like a photo gallery or onboarding flow.
+`Carousel.Viewport` measures its own width and carries the same
+double accessibility coverage `PageIndicator`/`Slider`/`Stepper` give:
+`accessibilityRole="adjustable"` with increment/decrement actions,
+alongside the swipe gesture. `Carousel.Track` never claims the touch
+responder on mere touch-down and requires the drag to be more
+horizontal than vertical before claiming it -- the same guard
+`SwipeableRow` uses -- so a Carousel embedded in your app's main
+vertically-scrolling screen doesn't break that screen's own scroll.
+`Carousel.Slide` auto-sizes to the measured viewport width; you supply
+its content and look.
+
+Supports controlled (`page`/`onPageChange`) and uncontrolled
+(`defaultPage`) usage, `disabled`, and an imperative ref
+(`CarouselHandle` -- `getPage`/`setPage`/`next`/`previous`).
+
+**Dev-mode checks.** Same controlled/uncontrolled warning as the other
+value-holding primitives, plus a warning when `count` isn't greater
+than 0.
+
+### Combobox
+
+```tsx
+import { Combobox } from 'anvil-native';
+
+function FruitCombobox({
+  value, onValueChange, query, onQueryChange,
+}: {
+  value: string | null; onValueChange: (v: string | null) => void;
+  query: string; onQueryChange: (q: string) => void;
+}) {
+  const options = ['Apple', 'Banana', 'Cherry'].filter((label) =>
+    label.toLowerCase().includes(query.toLowerCase())
+  );
+
+  return (
+    <Combobox.Root value={value} onValueChange={onValueChange} query={query} onQueryChange={onQueryChange}>
+      <Combobox.Input placeholder="Search fruit..." />
+      <Combobox.Content>
+        {options.map((label) => (
+          <Combobox.Item key={label} value={label}>
+            <Combobox.ItemText>{label}</Combobox.ItemText>
+          </Combobox.Item>
+        ))}
+      </Combobox.Content>
+    </Combobox.Root>
+  );
+}
+```
+
+`Select` with a text filter -- a `TextInput` (`Combobox.Input`) stands
+in for `Select.Trigger`, opening `Combobox.Content` on focus instead of
+on press, over the same floating-positioning (`computePosition`) and
+`Modal` machinery `Select`/`Popover` share. Filtering itself is
+deliberately not the primitive's job: you own `query`/`onQueryChange`,
+so you filter your own option list before mapping it to
+`Combobox.Item`s -- the primitive only tracks which value is selected
+and what the input currently reads, the same split `ScrollArea` uses
+for scroll math versus paint. Selecting an item (via
+`Combobox.ItemText`'s registered label, same mechanism as
+`Select.Value`) fills the input with that option's label and closes by
+default (`closeOnSelect={false}` on `Combobox.Item` to opt out, same as
+`Select.Item`).
+
+On web, closing the popover's `Modal` returns focus to `Input` --
+standard modal accessibility behavior -- which would otherwise
+immediately re-fire `onFocus` and reopen what selecting an item just
+closed. `Combobox` absorbs exactly that one spurious refocus internally,
+so selection reliably closes the popover; this surfaced only in a real
+browser; RNTL's `fireEvent.press` doesn't trigger it, which is exactly
+why every primitive here gets a live Playwright pass before being
+called done.
+
+Supports controlled (`value`/`onValueChange`), (`query`/`onQueryChange`),
+and (`open`/`onOpenChange`) usage independently, each with matching
+uncontrolled defaults, `disabled`, and an imperative ref
+(`ComboboxHandle` -- `open`/`close`/`toggle`/`isOpen`/`getValue`/`setValue`/`getQuery`/`setQuery`).
+
+**Dev-mode checks.** Independent controlled/uncontrolled warnings for
+`value`, `query`, and `open`.
+
+### SortableList
+
+```tsx
+import { SortableList } from 'anvil-native';
+import { Text, View } from 'react-native';
+
+function Tasks({ order, onOrderChange }: { order: string[]; onOrderChange: (order: string[]) => void }) {
+  return (
+    <SortableList.Root order={order} onOrderChange={onOrderChange}>
+      {order.map((task) => (
+        <SortableList.Item key={task} itemKey={task} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <Text>{task}</Text>
+          <SortableList.Handle>
+            <Text>☰</Text>
+          </SortableList.Handle>
+        </SortableList.Item>
+      ))}
+    </SortableList.Root>
+  );
+}
+```
+
+Drag-and-drop reordering -- the pattern iOS/Android settings screens,
+notes apps, and to-do lists all use. Following `BottomSheet`/`Drawer`'s
+own split, a dedicated `SortableList.Handle` (not the whole
+`SortableList.Item`) carries the drag gesture, so the rest of the row
+stays free for its own taps or swipes. `Item` identifies itself via a
+stable `itemKey` (not an index, which would shift under it as the list
+reorders) and measures its own height on layout; dragging one item
+computes, via math extracted to `internal/sortableListMath.ts` and
+unit-tested directly, both where the drag currently resolves to
+(crossing into a neighboring slot past the halfway point of that
+neighbor's height) and how far every *other* item should shift to make
+room -- all applied as plain `translateY`s, no ref to a list library.
+
+Dragging isn't independently reachable by assistive technology, so
+`Item` also carries `accessibilityActions` (increment/decrement) that
+move it one position at a time -- the same double coverage
+`PageIndicator`/`Carousel` give screen reader users for their own
+gestures.
+
+Supports controlled (`order`/`onOrderChange`) and uncontrolled
+(`defaultOrder`) usage, `disabled`, and an imperative ref
+(`SortableListHandle` -- `getOrder`/`setOrder`).
+
+**Dev-mode checks.** Same controlled/uncontrolled warning as the other
+value-holding primitives.
 
 ## Contributing
 
