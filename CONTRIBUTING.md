@@ -109,7 +109,16 @@ The `package.json` file contains various scripts for common tasks:
 - `yarn example ios`: run the example app on iOS.
   - `yarn example web`: run the example app on Web.
 - `yarn example build:web`: build the example app for Web.
-  
+- `yarn prepare`: builds the library (via `bob build`) into `lib/`, then runs
+  `scripts/fix-lib-package-json.js`. Don't drop that second step: `bob build`
+  writes `lib/module/package.json` with only `{ "type": "module" }`, and
+  bundlers resolve `sideEffects` from the *nearest* `package.json` to the
+  file being imported -- for anything under `lib/module/`, that's this
+  generated file, not the one at the repo root. Without the patch, the root
+  `package.json`'s `"sideEffects": false` is silently ignored by consumers'
+  bundlers, and importing a single primitive pulls in the whole library
+  instead of tree-shaking down to just what's used.
+
 ### Sending a pull request
 
 > **Working on your first pull request?** You can learn how from this _free_ series: [How to Contribute to an Open Source Project on GitHub](https://app.egghead.io/playlists/how-to-contribute-to-an-open-source-project-on-github).

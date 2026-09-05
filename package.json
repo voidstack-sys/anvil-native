@@ -2,6 +2,7 @@
   "name": "anvil-native",
   "version": "0.2.0",
   "description": "Headless, accessible UI primitives for React Native",
+  "sideEffects": false,
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
   "exports": {
@@ -34,7 +35,7 @@
   "scripts": {
     "example": "yarn workspace anvil-native-example",
     "clean": "del-cli lib",
-    "prepare": "bob build",
+    "prepare": "bob build && node scripts/fix-lib-package-json.js",
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "test": "jest",
