@@ -39,3 +39,7 @@ export * from './primitives/Skeleton';
 export * from './primitives/Carousel';
 export * from './primitives/Combobox';
 export * from './primitives/SortableList';
+export * from './primitives/PullToRefresh';
+export * from './primitives/SegmentedControl';
+export * from './primitives/DatePicker';
+export * from './primitives/PinchZoomView';

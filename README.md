@@ -83,6 +83,10 @@ Native.
 | [`Carousel`](#carousel) | Swipe between full-bleed pages, with snap-to-page |
 | [`Combobox`](#combobox) | A text input that filters and picks from a floating list of options |
 | [`SortableList`](#sortablelist) | A list reorderable by long-press-and-drag |
+| [`PullToRefresh`](#pulltorefresh) | Pull-down-to-refresh gesture over any scrollable content |
+| [`SegmentedControl`](#segmentedcontrol) | A single-select row with a sliding indicator, drag-to-scrub across segments |
+| [`DatePicker`](#datepicker) | A wheel-style day/month/year picker |
+| [`PinchZoomView`](#pinchzoomview) | Pinch-to-zoom and pan, with double-tap to toggle |
 
 ## Installation
 
@@ -1989,6 +1993,208 @@ Supports controlled (`order`/`onOrderChange`) and uncontrolled
 
 **Dev-mode checks.** Same controlled/uncontrolled warning as the other
 value-holding primitives.
+
+### PullToRefresh
+
+```tsx
+import { PullToRefresh } from 'anvil-native';
+import { Text } from 'react-native';
+
+function Feed({ items }: { items: string[] }) {
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchLatest().finally(() => setRefreshing(false));
+  };
+
+  return (
+    <PullToRefresh.Root refreshing={refreshing} onRefresh={handleRefresh}>
+      <PullToRefresh.Indicator>
+        {({ refreshing }) => <Text>{refreshing ? 'Refreshing…' : ''}</Text>}
+      </PullToRefresh.Indicator>
+      <PullToRefresh.Content>
+        {items.map((item) => (
+          <Text key={item}>{item}</Text>
+        ))}
+      </PullToRefresh.Content>
+    </PullToRefresh.Root>
+  );
+}
+```
+
+The classic mobile "swipe down to refresh" gesture, built on
+`PanResponder` like the rest of the library rather than the native
+`RefreshControl` -- so it composes the same way every other primitive
+here does (headless, styled entirely by you). `refreshing` has no
+uncontrolled mode: unlike `open`/`page`/`value` elsewhere, it always
+reflects a real in-flight async operation the consumer owns, so there's
+no sensible internal default to fall back to.
+
+`Content`'s drag only engages once you're scrolled to the top of
+whatever you've wrapped -- pass your own `ScrollView`/`FlatList`'s live
+`contentOffset.y` in as `scrollOffset` (it defaults to `0`, correct for
+content that's always at the top). Past `threshold` px (default `80`),
+releasing calls `onRefresh` and pins the indicator open at `threshold`
+until you flip `refreshing` back to `false`; short of that, it eases
+back to `0`. The pull distance itself gets a little resistance past the
+threshold (`internal/pullToRefreshMath.ts`, unit-tested directly) so a
+long pull keeps giving feedback without tracking the finger 1:1
+forever.
+
+A drag gesture has no assistive-technology equivalent, so `Root` also
+carries an `activate` accessibility action (VoiceOver's "magic tap")
+that calls `onRefresh` directly -- the same double coverage
+`Slider`/`Carousel`/`Stepper` give their own gestures. `Indicator` uses
+`accessibilityLiveRegion="polite"` while refreshing, since -- unlike
+`Skeleton`/`Badge`'s decorative UI -- it's actually informative.
+
+**Dev-mode checks.** Warns if `threshold` isn't greater than `0`.
+
+### SegmentedControl
+
+```tsx
+import { SegmentedControl } from 'anvil-native';
+import { Text } from 'react-native';
+
+function Period({ value, onValueChange }: { value: string; onValueChange: (v: string) => void }) {
+  return (
+    <SegmentedControl.Root value={value} onValueChange={onValueChange}>
+      <SegmentedControl.List style={{ flexDirection: 'row' }}>
+        <SegmentedControl.Indicator style={{ backgroundColor: '#fff' }} />
+        {['day', 'week', 'month'].map((option) => (
+          <SegmentedControl.Item key={option} value={option} style={{ flex: 1 }}>
+            {({ selected }) => <Text style={{ fontWeight: selected ? '700' : '400' }}>{option}</Text>}
+          </SegmentedControl.Item>
+        ))}
+      </SegmentedControl.List>
+    </SegmentedControl.Root>
+  );
+}
+```
+
+The iOS/Android segmented control: one selection among a few options,
+with a sliding indicator that animates between them (`Animated.timing`
+on `translateX`/`width` -- `width` can't run on the native thread, so
+this one animation runs on JS, an acceptable cost for a small,
+infrequent transition). Each `Item` reports its own `x`/`width` via
+`onLayout`, and `Indicator` reads whichever entry belongs to the
+current value.
+
+Beyond tapping an `Item` directly, `List` also supports dragging a
+finger across the row to scrub between segments -- resolved via pure
+hit-testing (`internal/segmentedControlMath.ts`, unit-tested directly)
+against each `Item`'s registered layout. Like `Carousel`/`SwipeableRow`,
+`List` never claims the gesture on mere touch-down, so a quick tap
+still reaches each `Item`'s own `Pressable` untouched; the gesture only
+engages past a real horizontal drag. That gesture-catching layer is
+kept as a separate inner `View` from `List`'s own accessibility props
+(same split as `Carousel.Viewport`/`Track`) -- a `View` carrying
+`PanResponder`'s should-set handlers reports "wouldn't claim the touch
+right now" whenever the drag gate isn't met, which would otherwise also
+suppress that same element's own unrelated `accessibilityAction`.
+
+Supports controlled (`value`/`onValueChange`) and uncontrolled
+(`defaultValue`) usage, `disabled` (on the group or per-`Item`), and an
+imperative ref (`SegmentedControlHandle` -- `select`/`getValue`).
+`List` also carries `accessibilityRole="radiogroup"` with
+increment/decrement actions cycling through segments in registration
+order, and each `Item` gets `accessibilityRole="radio"`.
+
+**Dev-mode checks.** Same controlled/uncontrolled warning as the other
+value-holding primitives.
+
+### DatePicker
+
+```tsx
+import { DatePicker } from 'anvil-native';
+import { Text } from 'react-native';
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function BirthDate({ value, onValueChange }: { value: Date; onValueChange: (d: Date) => void }) {
+  return (
+    <DatePicker.Root value={value} onValueChange={onValueChange}>
+      <View style={{ flexDirection: 'row' }}>
+        <DatePicker.Column field="day" style={{ height: 120, overflow: 'hidden' }}>
+          {(day, { selected }) => <Text style={{ opacity: selected ? 1 : 0.4 }}>{day}</Text>}
+        </DatePicker.Column>
+        <DatePicker.Column field="month" style={{ height: 120, overflow: 'hidden' }}>
+          {(month, { selected }) => <Text style={{ opacity: selected ? 1 : 0.4 }}>{MONTHS[month]}</Text>}
+        </DatePicker.Column>
+        <DatePicker.Column field="year" style={{ height: 120, overflow: 'hidden' }}>
+          {(year, { selected }) => <Text style={{ opacity: selected ? 1 : 0.4 }}>{year}</Text>}
+        </DatePicker.Column>
+      </View>
+    </DatePicker.Root>
+  );
+}
+```
+
+A native-feeling wheel picker for a `Date`, split across up to three
+independent `Column`s (`day`/`month`/`year` -- use just the ones you
+need). `Root` derives each column's valid range itself: `day`'s list
+shrinks to match the actual days in the current `month`/`year` (via
+`internal/dateMath.ts`'s `daysInMonth`), and picking a day that no
+longer exists after changing the month clamps down automatically (Jan
+31st -> February clamps to the 28th/29th). `minimumDate`/`maximumDate`
+bound the `year` list and clamp the committed date into range.
+
+Each `Column` is its own vertical, snap-to-row gesture -- drag math
+extracted to `internal/wheelPickerMath.ts` and unit-tested directly,
+mirroring `carouselMath.ts`'s shape (index instead of page, row height
+instead of viewport width, same velocity/distance-threshold release
+rule). Tapping a nearby row also jumps straight to it. As with
+`SegmentedControl.List`, the gesture-catching layer is a separate inner
+`View` from the one carrying `accessibilityRole="adjustable"` and
+increment/decrement actions, so an assistive-technology action is never
+suppressed by the drag gesture's own claim state.
+
+Supports controlled (`value`/`onValueChange`) and uncontrolled
+(`defaultValue`, defaulting to "now") usage, `disabled`, and an
+imperative ref (`DatePickerHandle` -- `getValue`/`setValue`).
+
+**Dev-mode checks.** Same controlled/uncontrolled warning as the other
+value-holding primitives, plus a warning if `minimumDate` is after
+`maximumDate`.
+
+### PinchZoomView
+
+```tsx
+import { PinchZoomView } from 'anvil-native';
+import { Image } from 'react-native';
+
+function Photo({ uri }: { uri: string }) {
+  return (
+    <PinchZoomView style={{ height: 300 }}>
+      <Image source={{ uri }} style={{ flex: 1 }} resizeMode="contain" />
+    </PinchZoomView>
+  );
+}
+```
+
+Two-finger pinch-to-zoom and pan, plus double-tap to jump to
+`doubleTapScale` (default `2`) or back to `1`. The pinch/pan math
+(distance between two touches, clamping the pan translation to the
+overflow scaling creates) lives in `internal/pinchZoomMath.ts`,
+unit-tested directly.
+
+Unlike every other gesture primitive here, `PinchZoomView` claims the
+responder from the very first touch rather than waiting for a
+qualifying drag -- it's designed as a standalone gesture surface (a
+full-screen image viewer, typically inside its own `Modal`), not one
+meant to be nested under another `PanResponder`-claiming parent. That
+immediate claim is also what makes a plain tap and a double-tap
+reliably detectable, which a deferred claim (like `Carousel`/
+`SwipeableRow` use) would miss.
+
+A single component, not a compound one -- there's no separate part that
+would benefit from being independently styled or swapped. Carries
+`accessibilityRole="adjustable"` with increment/decrement actions that
+step the scale by `0.5`, and exposes an imperative ref
+(`PinchZoomViewHandle` -- `reset`/`getScale`).
+
+**Dev-mode checks.** Warns if `minScale` isn't less than `maxScale`.
 
 ## Contributing
 

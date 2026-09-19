@@ -14,19 +14,23 @@ import {
   Collapsible,
   Combobox,
   ContextMenu,
+  DatePicker,
   Dialog,
   Drawer,
   Label,
   Menu,
   PageIndicator,
   PasswordToggleField,
+  PinchZoomView,
   PinInput,
   Popover,
   Progress,
+  PullToRefresh,
   RadioGroup,
   Rating,
   ScrollArea,
   Select,
+  SegmentedControl,
   Separator,
   Skeleton,
   Slider,
@@ -92,6 +96,29 @@ const SHIPPING_OPTIONS = [
   { value: 'overnight', label: 'Overnight (24hs)' },
 ];
 
+const PERIOD_OPTIONS = [
+  { value: 'day', label: 'Día' },
+  { value: 'week', label: 'Semana' },
+  { value: 'month', label: 'Mes' },
+];
+
+const FEED_ITEMS = ['Nuevo comentario', 'Pedido enviado', 'Pago recibido'];
+
+const MONTH_NAMES = [
+  'ene',
+  'feb',
+  'mar',
+  'abr',
+  'may',
+  'jun',
+  'jul',
+  'ago',
+  'sep',
+  'oct',
+  'nov',
+  'dic',
+];
+
 export default function App() {
   const [align, setAlign] = useState<Align>('left');
   const [fruit, setFruit] = useState<string | null>(null);
@@ -132,6 +159,19 @@ export default function App() {
     'Enviar informe',
   ]);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [period, setPeriod] = useState('week');
+  const [refreshing, setRefreshing] = useState(false);
+  const [feedUpdatedAt, setFeedUpdatedAt] = useState('hace 5 min');
+  const [birthDate, setBirthDate] = useState(new Date(1995, 5, 15));
+  const [zoomScale, setZoomScale] = useState(1);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setFeedUpdatedAt('recién ahora');
+      setRefreshing(false);
+    }, 1200);
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -1262,6 +1302,158 @@ export default function App() {
           )}
 
           <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de SegmentedControl
+          </Text>
+
+          <SegmentedControl.Root
+            value={period}
+            onValueChange={setPeriod}
+            testID="segmented"
+          >
+            <SegmentedControl.List style={styles.segmentedList}>
+              <SegmentedControl.Indicator style={styles.segmentedIndicator} />
+              {PERIOD_OPTIONS.map((option) => (
+                <SegmentedControl.Item
+                  key={option.value}
+                  value={option.value}
+                  testID={`segment-${option.value}`}
+                  style={styles.segmentedItem}
+                >
+                  {({ selected }) => (
+                    <Text
+                      style={[
+                        styles.segmentedItemLabel,
+                        selected && styles.segmentedItemLabelSelected,
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  )}
+                </SegmentedControl.Item>
+              ))}
+            </SegmentedControl.List>
+          </SegmentedControl.Root>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de PullToRefresh
+          </Text>
+
+          <Text style={styles.checkboxLabel}>
+            Actualizado {feedUpdatedAt} -- deslizá hacia abajo para refrescar
+          </Text>
+
+          <PullToRefresh.Root
+            testID="pull-refresh"
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            style={styles.pullRefreshRoot}
+          >
+            <PullToRefresh.Indicator testID="pull-refresh-indicator">
+              {({ refreshing: isRefreshing, progress }) => (
+                <Text style={styles.checkboxLabel}>
+                  {isRefreshing
+                    ? 'Actualizando…'
+                    : progress >= 1
+                      ? 'Soltá para refrescar'
+                      : ''}
+                </Text>
+              )}
+            </PullToRefresh.Indicator>
+            <PullToRefresh.Content style={styles.pullRefreshContent}>
+              {FEED_ITEMS.map((item) => (
+                <View key={item} style={styles.sortableItem}>
+                  <Text style={styles.sortableItemLabel}>{item}</Text>
+                </View>
+              ))}
+            </PullToRefresh.Content>
+          </PullToRefresh.Root>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de DatePicker
+          </Text>
+
+          <Text style={styles.checkboxLabel}>
+            {birthDate.getDate()} de {MONTH_NAMES[birthDate.getMonth()]} de{' '}
+            {birthDate.getFullYear()}
+          </Text>
+
+          <DatePicker.Root
+            value={birthDate}
+            onValueChange={setBirthDate}
+            testID="datepicker"
+          >
+            <View style={styles.datePickerRow}>
+              <DatePicker.Column
+                field="day"
+                testID="datepicker-day"
+                style={styles.datePickerColumn}
+              >
+                {(day, { selected }) => (
+                  <Text
+                    style={[
+                      styles.datePickerItem,
+                      selected && styles.datePickerItemSelected,
+                    ]}
+                  >
+                    {day}
+                  </Text>
+                )}
+              </DatePicker.Column>
+              <DatePicker.Column
+                field="month"
+                testID="datepicker-month"
+                style={styles.datePickerColumn}
+              >
+                {(month, { selected }) => (
+                  <Text
+                    style={[
+                      styles.datePickerItem,
+                      selected && styles.datePickerItemSelected,
+                    ]}
+                  >
+                    {MONTH_NAMES[month]}
+                  </Text>
+                )}
+              </DatePicker.Column>
+              <DatePicker.Column
+                field="year"
+                testID="datepicker-year"
+                style={styles.datePickerColumn}
+              >
+                {(year, { selected }) => (
+                  <Text
+                    style={[
+                      styles.datePickerItem,
+                      selected && styles.datePickerItemSelected,
+                    ]}
+                  >
+                    {year}
+                  </Text>
+                )}
+              </DatePicker.Column>
+            </View>
+          </DatePicker.Root>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
+            Anvil — demo de PinchZoomView
+          </Text>
+
+          <Text style={styles.checkboxLabel}>
+            Escala: {zoomScale.toFixed(1)}x -- pellizcá o doble-tap para hacer
+            zoom
+          </Text>
+
+          <PinchZoomView
+            testID="pinchzoom"
+            onScaleChange={setZoomScale}
+            style={styles.pinchZoomViewport}
+          >
+            <View style={styles.pinchZoomBox}>
+              <Text style={styles.carouselEmoji}>🔎</Text>
+            </View>
+          </PinchZoomView>
+
+          <Text style={[styles.title, styles.sectionSpacing]}>
             Anvil — demo de Toast
           </Text>
 
@@ -2186,5 +2378,66 @@ const styles = StyleSheet.create({
   },
   skeletonLineShort: {
     width: '50%',
+  },
+  segmentedList: {
+    borderRadius: 10,
+    backgroundColor: '#eee',
+    padding: 4,
+  },
+  segmentedIndicator: {
+    top: 4,
+    bottom: 4,
+    borderRadius: 8,
+    backgroundColor: '#fff',
+  },
+  segmentedItem: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  segmentedItemLabel: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '600',
+  },
+  segmentedItemLabelSelected: {
+    color: '#111',
+  },
+  pullRefreshRoot: {
+    height: 160,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#eee',
+  },
+  pullRefreshContent: {
+    backgroundColor: '#fff',
+  },
+  datePickerRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  datePickerColumn: {
+    width: 70,
+  },
+  datePickerItem: {
+    fontSize: 16,
+    color: '#999',
+  },
+  datePickerItemSelected: {
+    color: '#111',
+    fontWeight: '700',
+  },
+  pinchZoomViewport: {
+    height: 180,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#eee',
+  },
+  pinchZoomBox: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f5f5f5',
   },
 });
